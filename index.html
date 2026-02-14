@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URSO TV+ | Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --bg-dark: #080808;
+            --panel: #121212;
+        }
+
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+
+        /* --- TELA DE ABERTURA (SPLASH SCREEN) --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; transition: opacity 1s ease;
+        }
+        
+        .splash-logo {
+            width: 250px; height: 250px;
+            background: url('logo.png') no-repeat center;
+            background-size: contain;
+            filter: drop-shadow(0 0 20px var(--primary));
+            animation: zoomIn 8s forwards, pulse 2s infinite 2s;
+        }
+
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1.1); opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* --- INTERFACE PRINCIPAL --- */
+        #app-content { display: none; height: 100vh; flex-direction: column; color: white; }
+
+        header { height: 60px; background: #000; display: flex; align-items: center; padding: 0 25px; border-bottom: 2px solid var(--primary); justify-content: space-between; }
+        .logo-header { height: 40px; }
+
+        #cat-bar { background: var(--panel); display: flex; padding: 10px 20px; gap: 15px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .cat-btn { padding: 8px 18px; border-radius: 20px; cursor: pointer; background: #222; font-size: 14px; white-space: nowrap; }
+        .cat-btn.active { background: var(--primary); color: #000; font-weight: bold; }
+
+        #grid { flex: 1; display: grid; padding: 20px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; overflow-y: auto; }
+        .card { background: #151515; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
+        .card:focus { transform: scale(1.05); border-color: var(--primary); outline: none; }
+        .card img { width: 100%; height: 110px; object-fit: contain; }
+
+        #player-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; }
+        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1001; color: white; }
+    </style>
+</head>
+<body>
+
+    <audio id="bear-sound">
+        <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-one/animals_bear_growl_001.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="splash-screen">
+        <div class="splash-logo"></div>
+        <h1 style="color: var(--primary); margin-top: 20px; letter-spacing: 5px; font-weight: 300;">CARREGANDO...</h1>
+    </div>
+
+    <div id="app-content">
+        <header>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img src="logo.png" class="logo-header">
+                <span style="font-weight:900; color:var(--primary)">URSO TV+</span>
+            </div>
+            <input type="text" id="search" placeholder="Buscar canal..." oninput="renderGrid()" style="background:#1a1a1a; border:1px solid #333; color:white; padding:8px; border-radius:5px;">
+        </header>
+
+        <div id="cat-bar">
+            <div class="cat-btn active" onclick="filterCat('all')">Início</div>
+            <div id="dynamic-cats" style="display:flex; gap:10px;"></div>
+        </div>
+
+        <main id="grid"></main>
+    </div>
+
+    <div id="player-view">
+        <i class="fas fa-times close-btn" onclick="closePlayer()"></i>
+        <video id="video" controls autoplay style="width:100%; height:100%;"></video>
+    </div>
+
+<script>
+    const splash = document.getElementById('splash-screen');
+    const app = document.getElementById('app-content');
+    const bearSound = document.getElementById('bear-sound');
+    const video = document.getElementById('video');
+    const hls = new Hls();
+
+    // Lógica da Abertura
+    window.onload = () => {
+        // Tenta tocar o som (precisa de interação ou permissão do navegador)
+        bearSound.play().catch(() => console.log("Som bloqueado pelo navegador até interação"));
+
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                app.style.display = 'flex';
+                loadInitialData();
+            }, 1000);
+        }, 8000); // 8 segundos de exibição + 1s de fade
+    };
+
+    // Funções de carregamento (simplificadas do código anterior)
+    let channels = [];
+    async function loadInitialData() {
+        const url = "https://iptv-org.github.io/iptv/countries/br.m3u"; // Lista padrão
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            parseM3U(data);
+        } catch(e) { console.log("Erro ao carregar"); }
+    }
+
+    function parseM3U(data) {
+        const lines = data.split('\n');
+        channels = [];
+        for(let i=0; i<lines.length; i++) {
+            if(lines[i].startsWith('#EXTINF:')) {
+                const name = lines[i].split(',')[1]?.trim();
+                const logo = lines[i].match(/tvg-logo="([^"]+)"/)?.[1] || '';
+                const stream = lines[i+1]?.trim();
+                if(stream?.startsWith('http')) channels.push({name, logo, stream});
+            }
+        }
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = channels.slice(0, 50).map(ch => `
+            <div class="card" tabindex="0" onclick="playStream('${ch.stream}')">
+                <img src="${ch.logo || 'logo.png'}">
+                <div style="padding:10px; font-size:12px; text-align:center">${ch.name}</div>
+            </div>
+        `).join('');
+    }
+
+    function playStream(url) {
+        document.getElementById('player-view').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(video); }
+        else { video.src = url; }
+    }
+
+    function closePlayer() {
+        document.getElementById('player-view').style.display = 'none';
+        video.pause();
+    }
+</script>
+</body>
+</html>
