@@ -2,105 +2,822 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSO TV+ | Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>URSO TV+ | Multi-Server</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #00d4ff;
-            --bg-dark: #080808;
-            --panel: #121212;
-        }
-
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-
-        /* --- TELA DE ABERTURA (SPLASH SCREEN) --- */
-        #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; transition: opacity 1s ease;
-        }
+        :root { --primary: #00d4ff; --bg: #050505; --card: #1a1a1a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
         
-        .splash-logo {
-            width: 250px; height: 250px;
-            background: url('logo.png') no-repeat center;
-            background-size: contain;
-            filter: drop-shadow(0 0 20px var(--primary));
-            animation: zoomIn 8s forwards, pulse 2s infinite 2s;
-        }
+        /* TELA DE LOGIN COM PLAYERS */
+        #login-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 90%; max-width: 400px; text-align: center; }
+        
+        /* LOADING ANIMADO */
+        .loader { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1.1); opacity: 1; } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .server-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 12px; background: #222; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-server:focus, .btn-server:hover { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
 
-        /* --- INTERFACE PRINCIPAL --- */
-        #app-content { display: none; height: 100vh; flex-direction: column; color: white; }
-
-        header { height: 60px; background: #000; display: flex; align-items: center; padding: 0 25px; border-bottom: 2px solid var(--primary); justify-content: space-between; }
-        .logo-header { height: 40px; }
-
-        #cat-bar { background: var(--panel); display: flex; padding: 10px 20px; gap: 15px; overflow-x: auto; border-bottom: 1px solid #222; }
-        .cat-btn { padding: 8px 18px; border-radius: 20px; cursor: pointer; background: #222; font-size: 14px; white-space: nowrap; }
-        .cat-btn.active { background: var(--primary); color: #000; font-weight: bold; }
-
-        #grid { flex: 1; display: grid; padding: 20px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; overflow-y: auto; }
-        .card { background: #151515; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
-        .card:focus { transform: scale(1.05); border-color: var(--primary); outline: none; }
-        .card img { width: 100%; height: 110px; object-fit: contain; }
-
-        #player-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; }
-        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1001; color: white; }
+        /* INTERFACE PRINCIPAL */
+        #main-app { display: none; height: 100vh; flex-direction: column; }
+        .category-bar { display: flex; background: #000; padding: 15px; gap: 10px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .cat-item { padding: 10px 20px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; border: 2px solid transparent; }
+        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; padding: 20px; overflow-y: auto; flex: 1; }
+        .card { background: var(--card); border-radius: 10px; padding: 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; height: 100px; object-fit: contain; }
+        
+        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
+        video { width: 100%; height: 100%; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 21000; color: white; }
     </style>
 </head>
 <body>
 
-    <audio id="bear-sound">
-        <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-one/animals_bear_growl_001.mp3" type="audio/mpeg">
-    </audio>
-
-    <div id="splash-screen">
-        <div class="splash-logo"></div>
-        <h1 style="color: var(--primary); margin-top: 20px; letter-spacing: 5px; font-weight: 300;">CARREGANDO...</h1>
-    </div>
-
-    <div id="app-content">
-        <header>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <img src="logo.png" class="logo-header">
-                <span style="font-weight:900; color:var(--primary)">URSO TV+</span>
-            </div>
-            <input type="text" id="search" placeholder="Buscar canal..." oninput="renderGrid()" style="background:#1a1a1a; border:1px solid #333; color:white; padding:8px; border-radius:5px;">
-        </header>
-
-        <div id="cat-bar">
-            <div class="cat-btn active" onclick="filterCat('all')">Início</div>
-            <div id="dynamic-cats" style="display:flex; gap:10px;"></div>
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="logo.png" style="width: 100px; margin-bottom: 10px;">
+            <h2 id="msg-login">URSO TV+ PREMUM</h2>
+            <div id="loader" class="loader"></div>
+            
+            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Selecione um Servidor:</p>
+            <div class="server-grid" id="server-buttons">
+                </div>
+            
+            <input type="text" id="m3u" placeholder="Ou cole um link manual aqui" style="width:100%; padding:12px; margin-top:20px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="conectar(document.getElementById('m3u').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
         </div>
-
-        <main id="grid"></main>
     </div>
 
-    <div id="player-view">
-        <i class="fas fa-times close-btn" onclick="closePlayer()"></i>
-        <video id="video" controls autoplay style="width:100%; height:100%;"></video>
+    <div id="main-app">
+        <div class="category-bar">
+            <div class="cat-item active" tabindex="0" onclick="filtrar('CANAIS', this)">CANAIS</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('FILMES', this)">FILMES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('SERIES', this)">SÉRIES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('ADULTO', this)" style="color: #ff4d4d;">ADULTO 🔞</div>
+        </div>
+        <div class="grid" id="content-grid"></div>
+    </div>
+
+    <div id="player">
+        <span class="close-p" onclick="fecharPlayer()">× Voltar</span>
+        <video id="video" controls></video>
     </div>
 
 <script>
-    const splash = document.getElementById('splash-screen');
-    const app = document.getElementById('app-content');
-    const bearSound = document.getElementById('bear-sound');
-    const video = document.getElementById('video');
+    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
     const hls = new Hls();
+    const v = document.getElementById('video');
 
-    // Lógica da Abertura
-    window.onload = () => {
-        // Tenta tocar o som (precisa de interação ou permissão do navegador)
-        bearSound.play().catch(() => console.log("Som bloqueado pelo navegador até interação"));
+    // BUSCA OS SERVIDORES NO GITHUB
+    window.onload = async () => {
+        try {
+            const res = await fetch('lista.txt');
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            
+            const btnContainer = document.getElementById('server-buttons');
+            links.slice(0, 5).forEach((link, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-server';
+                btn.innerText = `PLAYER ${index + 1}`;
+                btn.onclick = () => conectar(link.trim());
+                btnContainer.appendChild(btn);
+            });
+            
+            if(links.length > 0) btnContainer.firstChild.focus(); // Foca no Player 1 para TV Box
+        } catch(e) { console.log("Erro ao carregar servidores remotos."); }
+    };
 
-        setTimeout(() => {
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
+    async function conectar(url) {
+        if(!url) return;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('server-buttons').style.opacity = '0.3';
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { 
+            alert("Este servidor está offline. Tente outro Player.");
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('server-buttons').style.opacity = '1';
+        }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = {
+                    name: line.split(',')[1]?.trim() || "Canal",
+                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png',
+                    url: stream
+                };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO') {
+            const senha = prompt("SENHA (1313):");
+            if(senha !== '1313') return;
+        }
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')" onkeydown="if(event.key==='Enter')play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name.substring(0,25)}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(v); v.play(); }
+        else { v.src = url; v.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        v.pause();
+    }
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>URSO TV+ | Multi-Server</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --primary: #00d4ff; --bg: #050505; --card: #1a1a1a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* TELA DE LOGIN COM PLAYERS */
+        #login-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 90%; max-width: 400px; text-align: center; }
+        
+        /* LOADING ANIMADO */
+        .loader { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .server-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 12px; background: #222; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-server:focus, .btn-server:hover { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
+
+        /* INTERFACE PRINCIPAL */
+        #main-app { display: none; height: 100vh; flex-direction: column; }
+        .category-bar { display: flex; background: #000; padding: 15px; gap: 10px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .cat-item { padding: 10px 20px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; border: 2px solid transparent; }
+        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; padding: 20px; overflow-y: auto; flex: 1; }
+        .card { background: var(--card); border-radius: 10px; padding: 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; height: 100px; object-fit: contain; }
+        
+        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
+        video { width: 100%; height: 100%; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 21000; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="logo.png" style="width: 100px; margin-bottom: 10px;">
+            <h2 id="msg-login">URSO TV+ PREMUM</h2>
+            <div id="loader" class="loader"></div>
+            
+            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Selecione um Servidor:</p>
+            <div class="server-grid" id="server-buttons">
+                </div>
+            
+            <input type="text" id="m3u" placeholder="Ou cole um link manual aqui" style="width:100%; padding:12px; margin-top:20px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="conectar(document.getElementById('m3u').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="category-bar">
+            <div class="cat-item active" tabindex="0" onclick="filtrar('CANAIS', this)">CANAIS</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('FILMES', this)">FILMES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('SERIES', this)">SÉRIES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('ADULTO', this)" style="color: #ff4d4d;">ADULTO 🔞</div>
+        </div>
+        <div class="grid" id="content-grid"></div>
+    </div>
+
+    <div id="player">
+        <span class="close-p" onclick="fecharPlayer()">× Voltar</span>
+        <video id="video" controls></video>
+    </div>
+
+<script>
+    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+    const hls = new Hls();
+    const v = document.getElementById('video');
+
+    // BUSCA OS SERVIDORES NO GITHUB
+    window.onload = async () => {
+        try {
+            const res = await fetch('lista.txt');
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            
+            const btnContainer = document.getElementById('server-buttons');
+            links.slice(0, 5).forEach((link, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-server';
+                btn.innerText = `PLAYER ${index + 1}`;
+                btn.onclick = () => conectar(link.trim());
+                btnContainer.appendChild(btn);
+            });
+            
+            if(links.length > 0) btnContainer.firstChild.focus(); // Foca no Player 1 para TV Box
+        } catch(e) { console.log("Erro ao carregar servidores remotos."); }
+    };
+
+    async function conectar(url) {
+        if(!url) return;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('server-buttons').style.opacity = '0.3';
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { 
+            alert("Este servidor está offline. Tente outro Player.");
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('server-buttons').style.opacity = '1';
+        }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = {
+                    name: line.split(',')[1]?.trim() || "Canal",
+                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png',
+                    url: stream
+                };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO') {
+            const senha = prompt("SENHA (1313):");
+            if(senha !== '1313') return;
+        }
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')" onkeydown="if(event.key==='Enter')play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name.substring(0,25)}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(v); v.play(); }
+        else { v.src = url; v.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        v.pause();
+    }
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>URSO TV+ | Multi-Server</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --primary: #00d4ff; --bg: #050505; --card: #1a1a1a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* TELA DE LOGIN COM PLAYERS */
+        #login-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 90%; max-width: 400px; text-align: center; }
+        
+        /* LOADING ANIMADO */
+        .loader { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .server-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 12px; background: #222; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-server:focus, .btn-server:hover { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
+
+        /* INTERFACE PRINCIPAL */
+        #main-app { display: none; height: 100vh; flex-direction: column; }
+        .category-bar { display: flex; background: #000; padding: 15px; gap: 10px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .cat-item { padding: 10px 20px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; border: 2px solid transparent; }
+        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; padding: 20px; overflow-y: auto; flex: 1; }
+        .card { background: var(--card); border-radius: 10px; padding: 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; height: 100px; object-fit: contain; }
+        
+        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
+        video { width: 100%; height: 100%; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 21000; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="logo.png" style="width: 100px; margin-bottom: 10px;">
+            <h2 id="msg-login">URSO TV+ PREMUM</h2>
+            <div id="loader" class="loader"></div>
+            
+            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Selecione um Servidor:</p>
+            <div class="server-grid" id="server-buttons">
+                </div>
+            
+            <input type="text" id="m3u" placeholder="Ou cole um link manual aqui" style="width:100%; padding:12px; margin-top:20px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="conectar(document.getElementById('m3u').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="category-bar">
+            <div class="cat-item active" tabindex="0" onclick="filtrar('CANAIS', this)">CANAIS</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('FILMES', this)">FILMES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('SERIES', this)">SÉRIES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('ADULTO', this)" style="color: #ff4d4d;">ADULTO 🔞</div>
+        </div>
+        <div class="grid" id="content-grid"></div>
+    </div>
+
+    <div id="player">
+        <span class="close-p" onclick="fecharPlayer()">× Voltar</span>
+        <video id="video" controls></video>
+    </div>
+
+<script>
+    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+    const hls = new Hls();
+    const v = document.getElementById('video');
+
+    // BUSCA OS SERVIDORES NO GITHUB
+    window.onload = async () => {
+        try {
+            const res = await fetch('lista.txt');
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            
+            const btnContainer = document.getElementById('server-buttons');
+            links.slice(0, 5).forEach((link, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-server';
+                btn.innerText = `PLAYER ${index + 1}`;
+                btn.onclick = () => conectar(link.trim());
+                btnContainer.appendChild(btn);
+            });
+            
+            if(links.length > 0) btnContainer.firstChild.focus(); // Foca no Player 1 para TV Box
+        } catch(e) { console.log("Erro ao carregar servidores remotos."); }
+    };
+
+    async function conectar(url) {
+        if(!url) return;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('server-buttons').style.opacity = '0.3';
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { 
+            alert("Este servidor está offline. Tente outro Player.");
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('server-buttons').style.opacity = '1';
+        }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = {
+                    name: line.split(',')[1]?.trim() || "Canal",
+                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png',
+                    url: stream
+                };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO') {
+            const senha = prompt("SENHA (1313):");
+            if(senha !== '1313') return;
+        }
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')" onkeydown="if(event.key==='Enter')play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name.substring(0,25)}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(v); v.play(); }
+        else { v.src = url; v.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        v.pause();
+    }
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>URSO TV+ | Multi-Server</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --primary: #00d4ff; --bg: #050505; --card: #1a1a1a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* TELA DE LOGIN COM PLAYERS */
+        #login-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 90%; max-width: 400px; text-align: center; }
+        
+        /* LOADING ANIMADO */
+        .loader { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .server-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 12px; background: #222; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-server:focus, .btn-server:hover { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
+
+        /* INTERFACE PRINCIPAL */
+        #main-app { display: none; height: 100vh; flex-direction: column; }
+        .category-bar { display: flex; background: #000; padding: 15px; gap: 10px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .cat-item { padding: 10px 20px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; border: 2px solid transparent; }
+        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; padding: 20px; overflow-y: auto; flex: 1; }
+        .card { background: var(--card); border-radius: 10px; padding: 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; height: 100px; object-fit: contain; }
+        
+        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
+        video { width: 100%; height: 100%; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 21000; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="logo.png" style="width: 100px; margin-bottom: 10px;">
+            <h2 id="msg-login">URSO TV+ PREMUM</h2>
+            <div id="loader" class="loader"></div>
+            
+            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Selecione um Servidor:</p>
+            <div class="server-grid" id="server-buttons">
+                </div>
+            
+            <input type="text" id="m3u" placeholder="Ou cole um link manual aqui" style="width:100%; padding:12px; margin-top:20px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="conectar(document.getElementById('m3u').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="category-bar">
+            <div class="cat-item active" tabindex="0" onclick="filtrar('CANAIS', this)">CANAIS</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('FILMES', this)">FILMES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('SERIES', this)">SÉRIES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('ADULTO', this)" style="color: #ff4d4d;">ADULTO 🔞</div>
+        </div>
+        <div class="grid" id="content-grid"></div>
+    </div>
+
+    <div id="player">
+        <span class="close-p" onclick="fecharPlayer()">× Voltar</span>
+        <video id="video" controls></video>
+    </div>
+
+<script>
+    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+    const hls = new Hls();
+    const v = document.getElementById('video');
+
+    // BUSCA OS SERVIDORES NO GITHUB
+    window.onload = async () => {
+        try {
+            const res = await fetch('lista.txt');
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            
+            const btnContainer = document.getElementById('server-buttons');
+            links.slice(0, 5).forEach((link, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-server';
+                btn.innerText = `PLAYER ${index + 1}`;
+                btn.onclick = () => conectar(link.trim());
+                btnContainer.appendChild(btn);
+            });
+            
+            if(links.length > 0) btnContainer.firstChild.focus(); // Foca no Player 1 para TV Box
+        } catch(e) { console.log("Erro ao carregar servidores remotos."); }
+    };
+
+    async function conectar(url) {
+        if(!url) return;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('server-buttons').style.opacity = '0.3';
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { 
+            alert("Este servidor está offline. Tente outro Player.");
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('server-buttons').style.opacity = '1';
+        }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = {
+                    name: line.split(',')[1]?.trim() || "Canal",
+                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png',
+                    url: stream
+                };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO') {
+            const senha = prompt("SENHA (1313):");
+            if(senha !== '1313') return;
+        }
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')" onkeydown="if(event.key==='Enter')play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name.substring(0,25)}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(v); v.play(); }
+        else { v.src = url; v.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        v.pause();
+    }
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>URSO TV+ | Multi-Server</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --primary: #00d4ff; --bg: #050505; --card: #1a1a1a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* TELA DE LOGIN COM PLAYERS */
+        #login-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 90%; max-width: 400px; text-align: center; }
+        
+        /* LOADING ANIMADO */
+        .loader { width: 40px; height: 40px; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .server-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 12px; background: #222; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-server:focus, .btn-server:hover { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
+
+        /* INTERFACE PRINCIPAL */
+        #main-app { display: none; height: 100vh; flex-direction: column; }
+        .category-bar { display: flex; background: #000; padding: 15px; gap: 10px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .cat-item { padding: 10px 20px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; border: 2px solid transparent; }
+        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; padding: 20px; overflow-y: auto; flex: 1; }
+        .card { background: var(--card); border-radius: 10px; padding: 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; height: 100px; object-fit: contain; }
+        
+        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
+        video { width: 100%; height: 100%; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 21000; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="logo.png" style="width: 100px; margin-bottom: 10px;">
+            <h2 id="msg-login">URSO TV+ PREMUM</h2>
+            <div id="loader" class="loader"></div>
+            
+            <p style="color: #888; font-size: 14px; margin-bottom: 5px;">Selecione um Servidor:</p>
+            <div class="server-grid" id="server-buttons">
+                </div>
+            
+            <input type="text" id="m3u" placeholder="Ou cole um link manual aqui" style="width:100%; padding:12px; margin-top:20px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+            <button onclick="conectar(document.getElementById('m3u').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="category-bar">
+            <div class="cat-item active" tabindex="0" onclick="filtrar('CANAIS', this)">CANAIS</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('FILMES', this)">FILMES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('SERIES', this)">SÉRIES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('ADULTO', this)" style="color: #ff4d4d;">ADULTO 🔞</div>
+        </div>
+        <div class="grid" id="content-grid"></div>
+    </div>
+
+    <div id="player">
+        <span class="close-p" onclick="fecharPlayer()">× Voltar</span>
+        <video id="video" controls></video>
+    </div>
+
+<script>
+    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+    const hls = new Hls();
+    const v = document.getElementById('video');
+
+    // BUSCA OS SERVIDORES NO GITHUB
+    window.onload = async () => {
+        try {
+            const res = await fetch('lista.txt');
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            
+            const btnContainer = document.getElementById('server-buttons');
+            links.slice(0, 5).forEach((link, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-server';
+                btn.innerText = `PLAYER ${index + 1}`;
+                btn.onclick = () => conectar(link.trim());
+                btnContainer.appendChild(btn);
+            });
+            
+            if(links.length > 0) btnContainer.firstChild.focus(); // Foca no Player 1 para TV Box
+        } catch(e) { console.log("Erro ao carregar servidores remotos."); }
+    };
+
+    async function conectar(url) {
+        if(!url) return;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('server-buttons').style.opacity = '0.3';
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { 
+            alert("Este servidor está offline. Tente outro Player.");
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('server-buttons').style.opacity = '1';
+        }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = {
+                    name: line.split(',')[1]?.trim() || "Canal",
+                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png',
+                    url: stream
+                };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO') {
+            const senha = prompt("SENHA (1313):");
+            if(senha !== '1313') return;
+        }
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')" onkeydown="if(event.key==='Enter')play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name.substring(0,25)}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(v); v.play(); }
+        else { v.src = url; v.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        v.pause();
+    }
+</script>
+</body>
+</html>
                 app.style.display = 'flex';
                 loadInitialData();
             }, 1000);
