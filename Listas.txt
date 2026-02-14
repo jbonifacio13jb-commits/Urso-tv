@@ -1,0 +1,5 @@
+http://63.141.241.90:80/get.php?username=59834887FC&password=84971419&type=m3u_plus
+http://mais.tvhome.click:80/get.php?username=ONNEPLAY&password=0511605511&type=m3u_plus
+http://63.141.241.90:80/get.php?username=Danivo0907&password=09072024&type=m3u_plus
+http://63.141.241.90:80/get.php?username=134578&password=456545&type=m3u_plus
+http://63.141.241.90:80/get.php?username=782428270&password=276277997&type=m3u_plus
