@@ -3,39 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>URSO TV+ | Oficial</title>
+    <title>URSO TV+ | Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        :root { --primary: #00d4ff; --bg: #000000; }
+        :root { --primary: #00d4ff; --bg: #000000; --card: #111111; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
-        #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .login-box { width: 90%; max-width: 400px; }
-        .server-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px 0; }
-        .btn-server { padding: 15px; background: #1a1a1a; border: 2px solid #333; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-server:focus { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+
+        /* TELA DE LOGIN */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .login-box { width: 90%; max-width: 420px; padding: 20px; }
+        .logo-img { width: 120px; margin-bottom: 15px; border-radius: 15px; }
+        
+        .server-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 15px; background: #1a1a1a; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-server:focus { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
+
+        /* INTERFACE PRINCIPAL */
         #main-app { display: none; height: 100vh; flex-direction: column; }
-        .category-bar { display: flex; background: #000; padding: 15px; gap: 10px; overflow-x: auto; }
-        .cat-item { padding: 10px 20px; background: #1a1a1a; border-radius: 50px; cursor: pointer; border: 2px solid transparent; }
-        .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; flex: 1; }
-        .card { background: #111; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; border: 2px solid transparent; }
-        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
-        .card img { width: 100%; aspect-ratio: 16/9; object-fit: contain; }
+        .category-bar { display: flex; background: #000; padding: 15px; gap: 12px; overflow-x: auto; border-bottom: 1px solid #222; }
+        .category-bar::-webkit-scrollbar { display: none; }
+        .cat-item { padding: 10px 22px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 2px solid transparent; }
+        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 20px; overflow-y: auto; flex: 1; }
+        .card { background: var(--card); border-radius: 10px; padding: 12px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.08); outline: none; }
+        .card img { width: 100%; aspect-ratio: 16/9; object-fit: contain; border-radius: 5px; margin-bottom: 8px; }
+        .card p { font-size: 12px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* PLAYER */
         #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
         video { width: 100%; height: 100%; }
-        .close-p { position: absolute; top: 20px; right: 20px; font-size: 25px; color: white; cursor: pointer; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 25px; cursor: pointer; color: white; z-index: 21000; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <img src="logo.png" style="width: 120px; margin-bottom: 10px;">
-            <h2>URSO TV+ PREMUM</h2>
-            <p style="color: #888;">Escolha um servidor para entrar:</p>
-            <div id="server-buttons" class="server-grid">
+            <img src="logo.png" class="logo-img" onerror="this.src='https://via.placeholder.com/120/00d4ff/000000?text=URSO+TV'">
+            <h2 id="msg-login">URSO TV+ PREMUM</h2>
+            <p id="status-msg" style="color: #888; font-size: 13px;">Selecione um servidor para iniciar:</p>
+            
+            <div class="server-grid" id="server-buttons">
                 </div>
-            <p id="status-msg" style="font-size: 12px; color: var(--primary);">Buscando listas no sistema...</p>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #222; padding-top: 15px;">
+                <input type="text" id="m3u-manual" placeholder="Link Manual M3U" style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                <button onclick="conectar(document.getElementById('m3u-manual').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
+            </div>
         </div>
     </div>
 
@@ -57,50 +74,101 @@
 <script>
     let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
     const hls = new Hls();
+    const videoElem = document.getElementById('video');
 
+    // BUSCA O ARQUIVO NO GITHUB (L maiúsculo conforme sua imagem)
     window.onload = async () => {
-        // Tenta carregar os arquivos ignorando maiúsculas/minúsculas
-        const arquivos = ['Lista.txt', 'lista.txt', 'Listas.txt'];
-        let linksEncontrados = [];
-
-        for (let nome of arquivos) {
-            try {
-                const res = await fetch(nome);
-                if (res.ok) {
-                    const data = await res.text();
-                    linksEncontrados = data.split('\n').filter(l => l.trim().startsWith('http'));
-                    if (linksEncontrados.length > 0) break;
-                }
-            } catch (e) {}
-        }
-
-        if (linksEncontrados.length > 0) {
-            const container = document.getElementById('server-buttons');
-            linksEncontrados.forEach((link, i) => {
+        try {
+            const res = await fetch('Lista.txt');
+            if (!res.ok) throw new Error();
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            
+            const btnContainer = document.getElementById('server-buttons');
+            links.slice(0, 6).forEach((link, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'btn-server';
-                btn.innerText = `PLAYER ${i+1}`;
+                btn.innerText = `PLAYER ${index + 1}`;
                 btn.onclick = () => conectar(link.trim());
-                container.appendChild(btn);
+                btnContainer.appendChild(btn);
             });
-            document.getElementById('status-msg').innerText = "Sistema Pronto!";
-            container.firstChild.focus();
-        } else {
-            document.getElementById('status-msg').innerText = "Erro: Arquivo lista.txt não encontrado no GitHub.";
+            if(links.length > 0) btnContainer.firstChild.focus();
+        } catch(e) {
+            document.getElementById('status-msg').innerText = "Erro: Crie o arquivo Lista.txt no GitHub.";
         }
     };
 
     async function conectar(url) {
-        document.getElementById('status-msg').innerText = "Carregando canais...";
+        if(!url) return;
+        document.getElementById('status-msg').innerText = "Carregando canais (Aguarde)...";
+        
+        // USO DE PROXY PARA EVITAR O ERRO DE SERVIDOR
+        const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+        
         try {
-            const res = await fetch(url);
+            const res = await fetch(proxyUrl);
             const data = await res.text();
-            const lines = data.split('\n');
-            todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
-            
-            lines.forEach((line, i) => {
-                if(line.includes('#EXTINF:')) {
-                    const stream = lines[i+1]?.trim();
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            const primeiraCat = document.querySelector('.cat-item');
+            primeiraCat.focus();
+            filtrar('CANAIS', primeiraCat);
+        } catch(e) { 
+            alert("Erro ao carregar este servidor. Verifique o link no arquivo Lista.txt");
+            document.getElementById('status-msg').innerText = "Erro no servidor escolhido.";
+        }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = {
+                    name: line.split(',')[1]?.trim() || "Canal",
+                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png',
+                    url: stream
+                };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO' && prompt("SENHA (1313):") !== '1313') return;
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')" onkeydown="if(event.key==='Enter')play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) {
+            hls.loadSource(url); hls.attachMedia(videoElem); videoElem.play();
+        } else { videoElem.src = url; videoElem.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        videoElem.pause();
+        hls.detachMedia();
+    }
+</script>
+</body>
+</html>
                     if(stream && stream.startsWith('http')) {
                         const item = { 
                             name: line.split(',')[1]?.trim() || "Canal", 
