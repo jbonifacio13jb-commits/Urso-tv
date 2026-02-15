@@ -14,17 +14,23 @@
         .logo-img { width: 150px; margin-bottom: 20px; border-radius: 15px; box-shadow: 0 0 20px var(--primary); }
         .server-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 90%; max-width: 400px; }
         
-        /* BOTÕES COM CORES ALTERNADAS */
-        .btn-server { padding: 20px; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        .btn-server:nth-child(odd) { background: #111; }
-        .btn-server:nth-child(even) { background: #1a1a1a; }
-        .btn-server:focus { background: var(--primary) !important; color: #000; border-color: white; transform: scale(1.05); outline: none; }
+        /* BOTÕES ESTILIZADOS */
+        .btn-server { padding: 20px; border: 2px solid #333; background: #111; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; position: relative; }
+        .btn-server:focus { outline: none; transform: scale(1.05); }
+
+        /* EFEITO PISCAR/PULSAR (CONECTANDO) */
+        @keyframes pulsar {
+            0% { box-shadow: 0 0 5px var(--cor); opacity: 1; }
+            50% { box-shadow: 0 0 25px var(--cor); opacity: 0.7; }
+            100% { box-shadow: 0 0 5px var(--cor); opacity: 1; }
+        }
+        .conectando { animation: pulsar 1s infinite; border-color: white !important; }
 
         /* INTERFACE PRINCIPAL */
         #main-app { display: none; height: 100vh; flex-direction: row; }
         .side-bar { width: 220px; background: #080808; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid #222; }
         .cat-item { padding: 15px; margin-bottom: 10px; background: #151515; border-radius: 8px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
-        .cat-item.active, .cat-item:focus { border-color: var(--primary); background: var(--primary); color: #000; }
+        .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; }
 
         .content-area { flex: 1; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 20px; }
         .card { background: #121212; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; }
@@ -47,129 +53,5 @@
     <div id="login-screen">
         <img src="logo.png" class="logo-img" onerror="this.src='https://via.placeholder.com/150/00d4ff/000000?text=URSO+TV'">
         <div id="server-buttons" class="server-grid"></div>
-        <p id="status-msg" style="color: #00d4ff; margin-top: 20px;">Iniciando sistema...</p>
-        <button class="btn-ui" style="background:#333; color:white; margin-top:20px; width:90%; max-width:400px;" onclick="toggleExit()">SAIR DO APK</button>
-    </div>
-
-    <div id="main-app">
-        <div class="side-bar">
-            <div class="cat-item active" onclick="render('CANAIS')">CANAIS</div>
-            <div class="cat-item" onclick="render('FILMES')">FILMES</div>
-            <div class="cat-item" onclick="render('SERIES')">SÉRIES</div>
-            <button class="btn-ui" style="margin-top: auto; background: #444; color: white;" onclick="window.location.reload()">RECARREGAR</button>
-        </div>
-        <div id="content-grid" class="content-area"></div>
-    </div>
-
-    <div id="player-container">
-        <button class="btn-ui" style="position:absolute; top:20px; left:20px; z-index:2100; background:rgba(0,0,0,0.5); color:white;" onclick="fecharPlayer()">❮ VOLTAR</button>
-        <video id="video" controls></video>
-    </div>
-
-    <div id="exit-modal">
-        <div class="exit-box">
-            <h3>Sair do Urso Tv?</h3>
-            <button class="btn-ui" style="background:red; color:white;" onclick="sairApp()">SIM</button>
-            <button class="btn-ui" style="background:#444; color:white;" onclick="toggleExit()">NÃO</button>
-        </div>
-    </div>
-
-<script>
-    let todos = { CANAIS: [], FILMES: [], SERIES: [] };
-    let linksServidores = [];
-    const hls = new Hls();
-    const v = document.getElementById('video');
-
-    function sairApp() {
-        if(navigator.app) navigator.app.exitApp();
-        else { window.location.href="about:blank"; }
-    }
-
-    async function carregarInício() {
-        const arquivos = ['Lista.txt', 'Listas.txt', 'lista.txt', 'listas.txt'];
-        for(let nome of arquivos) {
-            try {
-                const r = await fetch(nome + '?v=' + Date.now());
-                if(r.ok) {
-                    const text = await r.text();
-                    linksServidores = text.split('\n').filter(l => l.trim().startsWith('http'));
-                    const container = document.getElementById('server-buttons');
-                    linksServidores.forEach((l, i) => {
-                        const b = document.createElement('button');
-                        b.className = 'btn-server';
-                        b.innerText = `PLAYER ${i+1}`;
-                        b.onclick = () => tentarConectar(i);
-                        container.appendChild(b);
-                    });
-                    document.getElementById('status-msg').innerText = "Selecione um Servidor:";
-                    return;
-                }
-            } catch(e) {}
-        }
-        document.getElementById('status-msg').innerText = "Erro ao carregar arquivos do GitHub.";
-    }
-
-    // LÓGICA DE ALTERNÂNCIA AUTOMÁTICA EM CASO DE ERRO
-    async function tentarConectar(index) {
-        if (index >= linksServidores.length) {
-            alert("Nenhum servidor disponível no momento.");
-            document.getElementById('status-msg').innerText = "Falha em todos os servidores.";
-            return;
-        }
-
-        const url = linksServidores[index].trim();
-        document.getElementById('status-msg').innerText = `Tentando Servidor ${index + 1}...`;
-
-        try {
-            const r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
-            if (!r.ok) throw new Error();
-            const d = await r.text();
-            
-            organizar(d);
-            document.getElementById('login-screen').style.display='none';
-            document.getElementById('main-app').style.display='flex';
-            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-            render('CANAIS');
-        } catch(e) {
-            console.log(`Erro no Servidor ${index + 1}, pulando para o próximo...`);
-            tentarConectar(index + 1); // Pula para o próximo automaticamente
-        }
-    }
-
-    function organizar(data) {
-        todos = { CANAIS: [], FILMES: [], SERIES: [] };
-        data.split('\n').forEach((line, i, arr) => {
-            if(line.includes('#EXTINF:')) {
-                const url = arr[i+1]?.trim();
-                const item = { name: line.split(',')[1] || "Canal", logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png', url: url };
-                if(url && (url.includes('.mp4') || url.includes('.mkv'))) todos.FILMES.push(item);
-                else if(url) todos.CANAIS.push(item);
-            }
-        });
-    }
-
-    function render(cat) {
-        document.getElementById('content-grid').innerHTML = todos[cat].map(i => `
-            <div class="card" tabindex="0" onclick="play('${i.url}')">
-                <img src="${i.logo}" onerror="this.src='logo.png'">
-                <p>${i.name}</p>
-            </div>
-        `).join('');
-    }
-
-    function play(u) {
-        document.getElementById('player-container').style.display='block';
-        if(Hls.isSupported()) { hls.loadSource(u); hls.attachMedia(v); v.play(); }
-        else { v.src = u; v.play(); }
-    }
-
-    function fecharPlayer() { document.getElementById('player-container').style.display='none'; v.pause(); }
-    function toggleExit() { 
-        const m = document.getElementById('exit-modal');
-        m.style.display = (m.style.display==='flex'?'none':'flex');
-    }
-
-    carregarInício();
-</script>
-</body>
-</html>
+        <p id="status-msg" style="color: #00d4ff; margin-top: 20px; font-weight: bold;">Escolha um servidor</p>
+        <button class="btn-ui" style="background:#333;
