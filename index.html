@@ -13,34 +13,34 @@
             background: #000; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; 
         }
 
-        /* FUNDO COM IMAGEM FIXA E SOBREPOSIÇÃO */
+        /* FUNDO COM IMAGEM E SOBREPOSIÇÃO TOTAL */
         .main-bg {
             position: fixed; inset: 0;
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)), url('logo.png') no-repeat center;
-            background-size: cover; z-index: -1; filter: brightness(0.5);
+            background-size: cover; z-index: -1; filter: brightness(0.4);
         }
 
         #dashboard { 
-            display: flex; min-height: 100vh; flex-direction: column; 
+            display: flex; height: 100vh; flex-direction: column; 
             align-items: center; justify-content: center; 
-            /* AJUSTE PARA NÃO CORTAR NO TOPO */
             padding: env(safe-area-inset-top) 20px 20px 20px; 
             box-sizing: border-box; 
         }
 
-        /* LOGO COM PULSO NEON E RESPIRO SUPERIOR */
+        /* LOGO COM RESPIRO SUPERIOR PARA NÃO CORTAR */
         .logo-neon { 
-            width: 105px; margin-top: 10px; margin-bottom: 10px; 
+            width: 100px; margin-top: 25px; margin-bottom: 5px; 
             filter: drop-shadow(0 0 15px var(--neon));
             animation: pulse 2s infinite ease-in-out;
+            cursor: pointer;
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--neon)); }
-            50% { transform: scale(1.05); filter: drop-shadow(0 0 30px var(--neon)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 25px var(--neon)); }
         }
 
-        /* BOTÕES SEM MOLDURA - ESTILO GLASSMORPISM */
+        /* BOTÕES GLASSMORPISM SEM MOLDURA */
         .grid-menu { 
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; 
             width: 100%; max-width: 480px; 
@@ -50,62 +50,38 @@
             background: rgba(255, 255, 255, 0.05); 
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 20px; padding: 20px 10px; text-align: center;
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            border-radius: 20px; padding: 18px 10px; text-align: center;
+            cursor: pointer; transition: 0.3s;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .menu-item:active { 
-            background: rgba(0, 212, 255, 0.2);
-            border-color: var(--neon);
-            box-shadow: 0 0 25px var(--glow);
-            transform: scale(0.95);
-        }
+        .menu-item:active { background: var(--neon); color: #000; transform: scale(0.95); }
+        .menu-item i { font-size: 38px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 8px var(--neon)); }
+        .menu-item span { font-size: 12px; font-weight: 800; text-transform: uppercase; }
 
-        /* ÍCONES MODERNOS SEM MOLDURAS */
-        .menu-item i { 
-            font-size: 40px; display: block; margin-bottom: 8px;
-            filter: drop-shadow(0 0 8px var(--neon));
-        }
-
-        .menu-item span { 
-            font-size: 13px; font-weight: 800; letter-spacing: 1px; 
-            text-transform: uppercase; color: #fff;
-        }
-
-        /* LISTA E PLAYER SOBREPOSTOS */
-        #view { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(0,0,0,0.92); backdrop-filter: blur(15px);
-            flex-direction: column; padding: 20px; z-index: 100; 
-        }
-
-        .search-box { 
-            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--neon);
-            background: rgba(255,255,255,0.05); color: white; margin: 15px 0; outline: none; box-sizing: border-box;
-        }
-
+        /* LISTA E PLAYER */
+        #view { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); flex-direction: column; padding: 20px; z-index: 100; backdrop-filter: blur(15px); }
+        .search-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--neon); background: rgba(255,255,255,0.05); color: white; margin: 10px 0; outline: none; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; overflow-y: auto; }
-        .card { background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; border: 1px solid #333; }
-        .card p { font-size: 10px; padding: 8px; margin: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card { background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; border: 1px solid #333; text-align: center; }
+        .card p { font-size: 10px; padding: 5px; margin: 0; overflow: hidden; text-overflow: ellipsis; }
 
         #player { position: fixed; inset: 0; background: #000; display: none; z-index: 1000; }
         video { width: 100%; height: 100%; }
 
-        /* RODAPÉ STATUS */
-        #status { margin-top: 20px; font-size: 11px; font-weight: bold; color: var(--neon); letter-spacing: 2px; }
-        .nav-tools { position: fixed; bottom: 15px; display: flex; gap: 25px; opacity: 0.7; z-index: 10; }
-        .tool { cursor: pointer; border-bottom: 1px solid var(--neon); font-size: 10px; padding-bottom: 2px; }
+        #status { margin-top: 15px; font-size: 11px; color: var(--neon); font-weight: bold; letter-spacing: 2px; }
+        .nav-tools { position: fixed; bottom: 10px; display: flex; gap: 20px; opacity: 0.6; }
+        .tool { cursor: pointer; border-bottom: 1px solid var(--neon); font-size: 10px; }
     </style>
 </head>
-<body>
+<body onclick="entrarFullScreen()">
 
     <div class="main-bg"></div>
 
     <div id="dashboard">
-        <img src="logo.png" class="logo-neon" onerror="this.src='https://via.placeholder.com/150/00d4ff/000?text=URSO'">
-        <h1 style="margin: 0 0 25px 0; font-weight: 900; letter-spacing: -1px; font-size: 28px;">URSO<span style="color:var(--neon)">TV PRO</span></h1>
+        <img src="logo.png" class="logo-neon" onclick="entrarFullScreen()" onerror="this.src='https://via.placeholder.com/150/00d4ff/000?text=URSO'">
+        <h1 style="margin: 0 0 20px 0; font-weight: 900; font-size: 26px;">URSO<span style="color:var(--neon)">TV PRO</span></h1>
         
         <div class="grid-menu">
             <div class="menu-item" onclick="abrir('CANAIS')"><i>📺</i><span>Canais</span></div>
@@ -125,15 +101,15 @@
 
     <div id="view">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="voltar()" style="background:var(--neon); border:none; color:#000; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">❮ MENU</button>
+            <button onclick="voltar()" style="background:var(--neon); border:none; color:#000; padding:8px 20px; border-radius:20px; font-weight:bold;">❮ MENU</button>
             <span id="cat-label" style="color:var(--neon); font-weight:bold; text-transform: uppercase;"></span>
         </div>
-        <input type="text" class="search-box" placeholder="Pesquise aqui..." oninput="filtrar(this.value)">
+        <input type="text" class="search-box" placeholder="Pesquisar..." oninput="filtrar(this.value)">
         <div id="main-grid" class="grid"></div>
     </div>
 
     <div id="player">
-        <button style="position:absolute; top:20px; left:20px; z-index:1100; padding:12px 25px; background:var(--neon); border:none; border-radius:30px; font-weight:900; color:#000;" onclick="fechar()">VOLTAR</button>
+        <button style="position:absolute; top:20px; left:20px; z-index:1100; padding:10px 20px; background:var(--neon); border:none; border-radius:30px; font-weight:bold; color:#000;" onclick="fechar()">VOLTAR</button>
         <video id="vid" controls></video>
     </div>
 
@@ -142,6 +118,18 @@
     let catAtual = '';
     const hls = new Hls();
     const link = "https://xcloudcine.xyz/get.php?username=619963334&password=327363322&type=m3u_plus";
+
+    // FUNÇÃO TELA CHEIA E ORIENTAÇÃO
+    function entrarFullScreen() {
+        const doc = document.documentElement;
+        if (doc.requestFullscreen) doc.requestFullscreen();
+        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+        
+        // Tenta travar na horizontal (em alguns navegadores)
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(e => console.log("Erro ao travar tela"));
+        }
+    }
 
     async function carregar() {
         const s = document.getElementById('status');
@@ -156,7 +144,6 @@
         } catch(e) {
             const c = localStorage.getItem('u_cache');
             if(c) { processar(c); s.innerText = "MODO CACHE ATIVO"; }
-            else { s.innerText = "ERRO DE CONEXÃO"; }
         }
     }
 
