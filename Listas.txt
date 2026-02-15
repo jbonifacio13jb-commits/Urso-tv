@@ -1,2 +1,2 @@
 https://iptv-org.github.io/iptv/countries/br.m3u
-
+http://clarotv.org:80/get.php?username=Gilmar2424&password=f3Zq4T&type=m3u_plus
