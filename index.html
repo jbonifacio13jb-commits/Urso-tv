@@ -8,187 +8,61 @@
     <style>
         :root { --neon: #00d4ff; --glow: rgba(0, 212, 255, 0.6); }
         
+        /* RESET TOTAL PARA TELA CHEIA */
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100vh; 
             background: #000; color: white; font-family: 'Segoe UI', sans-serif; 
-            overflow: hidden; position: fixed;
+            overflow: hidden; position: fixed; 
         }
 
+        /* FUNDO DINÂMICO SEM BORDAS */
         .main-bg {
             position: fixed; inset: 0;
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('logo.png') no-repeat center;
             background-size: cover; z-index: -1; filter: brightness(0.4);
         }
 
-        /* BOTÃO TOGGLE FULLSCREEN NO CANTO */
+        /* BOTÃO TOGGLE FULLSCREEN (LIGA/DESLIGA IMERSÃO) */
         .fs-toggle {
             position: fixed; top: 15px; right: 15px; z-index: 1001;
-            background: rgba(0, 212, 255, 0.2); border: 1px solid var(--neon);
-            color: var(--neon); padding: 8px; border-radius: 50%;
-            cursor: pointer; backdrop-filter: blur(10px); width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
+            background: rgba(0, 212, 255, 0.15); border: 1px solid var(--neon);
+            color: var(--neon); width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; backdrop-filter: blur(10px); font-size: 22px;
             box-shadow: 0 0 15px var(--glow);
         }
 
         #dashboard { 
             display: flex; height: 100vh; flex-direction: column; 
-            align-items: center; justify-content: center; padding: 0 20px; box-sizing: border-box; 
+            align-items: center; justify-content: center; padding: 0 20px;
         }
 
         .logo-neon { 
-            width: 100px; margin-bottom: 5px; 
-            filter: drop-shadow(0 0 15px var(--neon));
+            width: 110px; margin-bottom: 5px; 
+            filter: drop-shadow(0 0 20px var(--neon));
             animation: pulse 2s infinite ease-in-out;
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--neon)); }
-            50% { transform: scale(1.05); filter: drop-shadow(0 0 25px var(--neon)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--neon)); }
         }
 
+        /* MENU GLASSMORPISM */
         .grid-menu { 
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; 
-            width: 100%; max-width: 480px; z-index: 10;
+            width: 100%; max-width: 500px; z-index: 10;
         }
 
         .menu-item { 
             background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 20px; 
-            padding: 22px 10px; text-align: center; cursor: pointer; transition: 0.3s;
+            border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 20px; 
+            padding: 25px 10px; text-align: center; cursor: pointer; transition: 0.3s;
         }
 
         .menu-item:active { background: var(--neon); color: #000; transform: scale(0.95); }
-        .menu-item i { font-size: 40px; display: block; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--neon)); }
-        .menu-item span { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        .menu-item i { font-size: 42px; display: block; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--neon)); }
+        .menu-item span { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
 
-        #view { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); flex-direction: column; padding: 20px; z-index: 100; backdrop-filter: blur(20px); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; overflow-y: auto; }
-        .card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid #333; }
-        .card p { font-size: 10px; padding: 8px; margin: 0; text-align: center; }
-
-        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 1000; }
-        video { width: 100%; height: 100%; }
-
-        #status { margin-top: 20px; font-size: 11px; color: var(--neon); font-weight: bold; letter-spacing: 2px; }
-        .nav-tools { position: fixed; bottom: 15px; display: flex; gap: 30px; opacity: 0.6; }
-        .tool { cursor: pointer; border-bottom: 1px solid var(--neon); font-size: 11px; }
-    </style>
-</head>
-<body>
-
-    <div class="main-bg"></div>
-
-    <div class="fs-toggle" onclick="toggleFS()" title="Tela Cheia">⛶</div>
-
-    <div id="dashboard">
-        <img src="logo.png" class="logo-neon" onerror="this.src='https://via.placeholder.com/150/00d4ff/000?text=URSO'">
-        <h1 style="margin: 0 0 30px 0; font-weight: 900; font-size: 30px;">URSO<span style="color:var(--neon)">TV PRO</span></h1>
-        
-        <div class="grid-menu">
-            <div class="menu-item" onclick="abrir('CANAIS')"><i>📺</i><span>Canais</span></div>
-            <div class="menu-item" onclick="abrir('FILMES')"><i>🎬</i><span>Filmes</span></div>
-            <div class="menu-item" onclick="abrir('SERIES')"><i>🍿</i><span>Séries</span></div>
-            <div class="menu-item" onclick="document.getElementById('f-in').click()" style="border-style: dashed;"><i>📂</i><span>Abrir M3U</span></div>
-        </div>
-        
-        <div id="status">SISTEMA ATIVO</div>
-
-        <div class="nav-tools">
-            <div class="tool" onclick="limpar()">LIMPAR CACHE</div>
-            <div class="tool" onclick="location.reload()">RECARREGAR</div>
-        </div>
-        <input type="file" id="f-in" style="display:none" accept=".m3u,.m3u8" onchange="carregarLocal(this)">
-    </div>
-
-    <div id="view">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-            <button onclick="voltar()" style="background:var(--neon); border:none; color:#000; padding:10px 25px; border-radius:30px; font-weight:bold;">❮ MENU</button>
-            <span id="cat-label" style="color:var(--neon); font-weight:bold; letter-spacing: 2px;"></span>
-        </div>
-        <input type="text" style="width:100%; padding:15px; border-radius:12px; border:1px solid var(--neon); background:rgba(255,255,255,0.05); color:white; margin-bottom:15px; outline:none;" placeholder="Pesquisar..." oninput="filtrar(this.value)">
-        <div id="main-grid" class="grid"></div>
-    </div>
-
-    <div id="player">
-        <button style="position:absolute; top:20px; left:20px; z-index:1100; padding:15px 30px; background:var(--neon); border:none; border-radius:40px; font-weight:900;" onclick="fechar()">VOLTAR</button>
-        <video id="vid" controls></video>
-    </div>
-
-<script>
-    let dados = { CANAIS: [], FILMES: [], SERIES: [] };
-    let catAtual = '';
-    const hls = new Hls();
-    const linkBase = "https://xcloudcine.xyz/get.php?username=619963334&password=327363322&type=m3u_plus";
-
-    // FUNÇÃO LIGA/DESLIGA TELA CHEIA
-    function toggleFS() {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.documentElement.webkitRequestFullscreen) {
-                document.documentElement.webkitRequestFullscreen();
-            }
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock("landscape").catch(() => {});
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
-        }
-    }
-
-    async function carregar() {
-        const s = document.getElementById('status');
-        try {
-            const r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(linkBase));
-            const t = await r.text();
-            if(t.includes("#EXTM3U")) {
-                processar(t);
-                s.innerText = "NUVEM CONECTADA ✅";
-                localStorage.setItem('u_cache', t);
-            }
-        } catch(e) {
-            const c = localStorage.getItem('u_cache');
-            if(c) { processar(c); s.innerText = "MODO CACHE"; }
-        }
-    }
-
-    function processar(t) {
-        dados = { CANAIS: [], FILMES: [], SERIES: [] };
-        const linhas = t.split('\n');
-        linhas.forEach((l, i) => {
-            if(l.includes("#EXTINF")) {
-                const n = l.split(',')[1] || "Canal";
-                const g = l.match(/tvg-logo="([^"]+)"/)?.[1] || "";
-                const u = linhas[i+1]?.trim();
-                if(u && u.startsWith("http")) {
-                    const item = { n, g, u };
-                    if(u.includes("movie")) dados.FILMES.push(item);
-                    else if(u.includes("series")) dados.SERIES.push(item);
-                    else dados.CANAIS.push(item);
-                }
-            }
-        });
-    }
-
-    function abrir(c) {
-        catAtual = c;
-        if(dados[c].length === 0) return alert("Sincronizando...");
-        document.getElementById('view').style.display = 'flex';
-        document.getElementById('cat-label').innerText = c;
-        render(dados[c]);
-    }
-
-    function render(l) {
-        document.getElementById('main-grid').innerHTML = l.map(i => `
-            <div class="card" onclick="play('${i.u}')">
-                <img src="${i.g}" onerror="this.src='https://via.placeholder.com/110x160/111/00d4ff?text=URSO'">
-                <p>${i.n}</p>
-            </div>
-        `).join('');
-    }
-
-    function filtrar(v) { render(dados[catAtual].filter(i => i.n.toLowerCase().includes(v.toLowerCase()))); }
+        /* LISTAS E PLAYER */
+        #view { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.
