@@ -9,54 +9,36 @@
         :root { --primary: #00d4ff; --bg: #000000; --card: #111111; --text: #ffffff; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
-
-        /* TELA DE LOGIN PROFISSIONAL */
         #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
         .login-box { width: 90%; max-width: 420px; text-align: center; padding: 20px; }
         .logo-img { width: 120px; margin-bottom: 15px; border-radius: 15px; }
-        
-        .loader { width: 35px; height: 35px; border: 4px solid #222; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 15px auto; display: none; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         .server-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .btn-server { padding: 12px; background: #1a1a1a; border: 2px solid #333; color: white; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
-        .btn-server:focus, .btn-server:hover { border-color: var(--primary); background: var(--primary); color: #000; outline: none; transform: scale(1.05); }
-
-        /* INTERFACE PRINCIPAL ADAPTATIVA */
+        .btn-server { padding: 12px; background: #1a1a1a; border: 2px solid #333; color: white; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-server:focus { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
         #main-app { display: none; height: 100vh; flex-direction: column; }
         .category-bar { display: flex; background: #000; padding: 15px; gap: 12px; overflow-x: auto; border-bottom: 1px solid #222; }
-        .category-bar::-webkit-scrollbar { display: none; }
-        .cat-item { padding: 10px 22px; background: #1a1a1a; border-radius: 50px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 2px solid transparent; }
-        .cat-item:focus, .cat-item.active { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
-
+        .cat-item { padding: 10px 22px; background: #1a1a1a; border-radius: 50px; cursor: pointer; font-size: 13px; border: 2px solid transparent; }
+        .cat-item.active { background: var(--primary); color: #000; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 20px; overflow-y: auto; flex: 1; }
-        .card { background: var(--card); border-radius: 10px; padding: 12px; text-align: center; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
-        .card:focus { border-color: var(--primary); transform: scale(1.08); outline: none; box-shadow: 0 0 15px rgba(0,212,255,0.3); }
-        .card img { width: 100%; aspect-ratio: 16/9; object-fit: contain; border-radius: 5px; margin-bottom: 8px; }
-        .card p { font-size: 12px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* PLAYER */
+        .card { background: var(--card); border-radius: 10px; padding: 12px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; aspect-ratio: 16/9; object-fit: contain; }
         #player { position: fixed; inset: 0; background: #000; display: none; z-index: 20000; }
         video { width: 100%; height: 100%; }
-        .close-p { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; color: white; z-index: 21000; padding: 10px; }
+        .close-p { position: absolute; top: 20px; right: 20px; font-size: 25px; cursor: pointer; color: white; z-index: 21000; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <img src="logo.png" class="logo-img" onerror="this.src='https://via.placeholder.com/120/00d4ff/000000?text=URSO+TV'">
-            <h2 id="msg-login" style="font-size: 1.5rem; margin-bottom: 5px;">URSO TV+ PREMUM</h2>
-            <p style="color: #888; font-size: 13px;">Selecione um servidor abaixo:</p>
-            
-            <div id="loader" class="loader"></div>
-            
-            <div class="server-grid" id="server-buttons">
-                </div>
-            
-            <div style="margin-top: 30px; border-top: 1px solid #222; padding-top: 15px;">
-                <input type="text" id="m3u-manual" placeholder="Link Manual M3U/Xtream" style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px; font-size:14px;">
-                <button onclick="conectar(document.getElementById('m3u-manual').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACESSAR MANUAL</button>
+            <img src="logo.png" class="logo-img">
+            <h2>URSO TV+ PREMUM</h2>
+            <p style="color: #888; font-size: 13px;">Selecione um servidor:</p>
+            <div class="server-grid" id="server-buttons"></div>
+            <div style="margin-top: 30px;">
+                <input type="text" id="m3u-manual" placeholder="Link Manual M3U" style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                <button onclick="conectar(document.getElementById('m3u-manual').value)" style="width:100%; padding:12px; margin-top:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold;">ACESSAR MANUAL</button>
             </div>
         </div>
     </div>
@@ -81,26 +63,95 @@
     const hls = new Hls();
     const videoElem = document.getElementById('video');
 
-    // LER ARQUIVO lista.txt NO GITHUB
-    window.onload = async () => {
+    // Tenta carregar os arquivos de lista que você criou no GitHub
+    async function carregarListasRemotas() {
+        const arquivos = ['Lista.txt', 'Listas.txt', 'lista.txt'];
+        for (let nome of arquivos) {
+            try {
+                const res = await fetch(nome);
+                if (res.ok) {
+                    const data = await res.text();
+                    const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+                    if (links.length > 0) {
+                        renderizarBotoes(links);
+                        return;
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
+    function renderizarBotoes(links) {
+        const btnContainer = document.getElementById('server-buttons');
+        btnContainer.innerHTML = '';
+        links.slice(0, 6).forEach((link, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-server';
+            btn.innerText = `PLAYER ${index + 1}`;
+            btn.onclick = () => conectar(link.trim());
+            btnContainer.appendChild(btn);
+        });
+        if(btnContainer.firstChild) btnContainer.firstChild.focus();
+    }
+
+    async function conectar(url) {
+        if(!url) return;
         try {
-            const res = await fetch('lista.txt');
-            if (!res.ok) throw new Error();
+            const res = await fetch(url);
             const data = await res.text();
-            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
-            
-            const btnContainer = document.getElementById('server-buttons');
-            links.slice(0, 5).forEach((link, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-server';
-                btn.tabIndex = 0;
-                btn.innerText = `PLAYER ${index + 1}`;
-                btn.onclick = () => conectar(link.trim());
-                btnContainer.appendChild(btn);
-            });
-            
-            if(links.length > 0) btnContainer.firstChild.focus();
-        } catch(e) {
+            organizarConteudo(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { alert("Servidor Offline."); }
+    }
+
+    function organizarConteudo(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        const lines = data.split('\n');
+        lines.forEach((line, i) => {
+            if(line.includes('#EXTINF:')) {
+                const stream = lines[i+1]?.trim();
+                if(!stream || !stream.startsWith('http')) return;
+                const item = { name: line.split(',')[1]?.trim() || "Canal", logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png', url: stream };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult|sex|18\+/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(stream.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO') {
+            if(prompt("SENHA (1313):") !== '1313') return;
+        }
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('content-grid').innerHTML = todosConteudos[cat].map(item => `
+            <div class="card" tabindex="0" onclick="play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(videoElem); videoElem.play(); }
+        else { videoElem.src = url; videoElem.play(); }
+    }
+
+    function fecharPlayer() {
+        document.getElementById('player').style.display = 'none';
+        videoElem.pause();
+    }
+
+    window.onload = carregarListasRemotas;
+</script>
+</body>
+</html>
             document.getElementById('msg-login').innerText = "URSO TV+";
             console.log("Crie o arquivo lista.txt no seu GitHub.");
         }
