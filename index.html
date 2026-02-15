@@ -6,149 +6,78 @@
     <title>URSOTV PREMIUM</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        :root { --primary: #00d4ff; --bg: #000; }
-        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
-        
-        /* TELA DE LOGIN NEON */
-        #login-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; z-index: 1000; }
-        .logo-img { width: 160px; margin-bottom: 25px; border-radius: 20px; box-shadow: 0 0 20px var(--primary); border: 2px solid var(--primary); }
-        
-        .btn-server { 
-            padding: 18px 40px; border: 2px solid var(--primary); background: transparent; 
-            color: var(--primary); border-radius: 12px; cursor: pointer; font-weight: bold; 
-            font-size: 18px; text-transform: uppercase; transition: 0.3s;
+        :root { --primary: #00d4ff; --bg: #000; --card-bg: rgba(255, 255, 255, 0.05); }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+
+        /* TELA DE SPLASH (ABERTURA) */
+        #splash-screen {
+            position: fixed; inset: 0; background: #000; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
+        .splash-logo {
+            width: 180px; filter: drop-shadow(0 0 20px var(--primary));
+            animation: pulse-neon 2s infinite ease-in-out;
+        }
+        @keyframes pulse-neon { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } }
 
-        /* ANIMAÇÃO DE PULSAR (PISCAR) */
-        @keyframes piscar { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-        .conectando { animation: piscar 0.8s infinite; border-color: #fff; color: #fff; }
+        /* TELA DE LOGIN */
+        #login-screen { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #001a2e 0%, #000 100%); z-index: 1000; }
+        .logo-main { width: 140px; border-radius: 50%; border: 3px solid var(--primary); box-shadow: 0 0 30px var(--primary); margin-bottom: 20px; }
+        .btn-entrar { padding: 15px 50px; background: var(--primary); color: #000; border: none; border-radius: 30px; font-weight: bold; font-size: 18px; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
 
-        /* INTERFACE PRINCIPAL */
-        #main-app { display: none; height: 100vh; flex-direction: column; }
-        .nav-bar { display: flex; background: #111; padding: 10px; gap: 10px; border-bottom: 1px solid #222; }
-        .cat-btn { flex: 1; padding: 12px; border: none; background: #222; color: white; border-radius: 5px; font-weight: bold; }
-        .cat-btn.active { background: var(--primary); color: #000; }
-        
-        .content { flex: 1; overflow-y: auto; padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
-        .card { background: #151515; border-radius: 10px; overflow: hidden; border: 1px solid #333; text-align: center; cursor: pointer; }
+        /* DASHBOARD ESTILO XCIPTV */
+        #dashboard { display: none; height: 100vh; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .grid-menu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; flex: 1; align-content: center; }
+        .menu-item { background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 15px; padding: 30px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .menu-item:hover { background: var(--primary); color: #000; }
+
+        /* TELA DE LISTA E BUSCA */
+        #content-view { display: none; height: 100vh; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .search-container { margin-bottom: 15px; }
+        #search-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--primary); background: #111; color: white; outline: none; }
+        .grid-content { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; overflow-y: auto; flex: 1; }
+        .card { background: #111; border-radius: 8px; overflow: hidden; border: 1px solid #222; text-align: center; }
         .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
-        .card p { font-size: 11px; padding: 8px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
+        
         /* PLAYER */
-        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 2000; }
+        #player-ui { position: fixed; inset: 0; background: #000; display: none; z-index: 6000; }
         video { width: 100%; height: 100%; }
-        .back-btn { position: absolute; top: 15px; left: 15px; padding: 10px 20px; background: var(--primary); border: none; border-radius: 5px; font-weight: bold; z-index: 2100; color: #000; }
+        .back-btn { position: absolute; top: 20px; left: 20px; z-index: 6100; padding: 10px 20px; background: var(--primary); color: #000; border-radius: 5px; border: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div id="splash-screen">
+        <img src="logo.png" class="splash-logo" onerror="this.src='https://via.placeholder.com/180/00d4ff/000?text=URSO+TV'">
+        <div style="margin-top: 20px; color: var(--primary); letter-spacing: 5px; font-weight: bold;">CARREGANDO...</div>
+    </div>
+
     <div id="login-screen">
-        <img src="logo.png" class="logo-img" onerror="this.src='https://via.placeholder.com/160/00d4ff/000?text=URSO+TV'">
-        <button id="btn-entrar" class="btn-server" onclick="iniciarTeste()">ACESSAR PLAYER 1</button>
-        <p id="msg" style="color: var(--primary); margin-top: 20px; font-weight: bold;">Toque para carregar canais</p>
+        <img src="logo.png" class="logo-main" onerror="this.src='https://via.placeholder.com/150/00d4ff/000?text=URSO'">
+        <h1 style="color: var(--primary); font-size: 24px; margin: 0;">URSOTV+</h1>
+        <p style="opacity: 0.5; margin-bottom: 30px;">PREMIUM ENTERTAINMENT</p>
+        <button class="btn-entrar" onclick="carregarPainel()">ACESSAR PLAYER</button>
+        <p id="status-txt" style="margin-top:20px; font-size:11px; opacity:0.6;">VERSÃO 2.0 NEON</p>
     </div>
 
-    <div id="main-app">
-        <div class="nav-bar">
-            <button id="btn-canais" class="cat-btn active" onclick="mostrar('CANAIS')">CANAIS</button>
-            <button id="btn-filmes" class="cat-btn" onclick="mostrar('FILMES')">FILMES / SÉRIES</button>
+    <div id="dashboard">
+        <div class="header">
+            <h2 style="color: var(--primary); margin: 0;">PAINEL URSO</h2>
+            <span id="clock" style="font-weight: bold; background: #111; padding: 5px 10px; border-radius: 5px;">00:00</span>
         </div>
-        <div id="grid" class="content"></div>
-    </div>
-
-    <div id="player">
-        <button class="back-btn" onclick="fechar()">❮ VOLTAR</button>
-        <video id="vid" controls></video>
-    </div>
-
-<script>
-    let dados = { CANAIS: [], FILMES: [] };
-    
-    // LINK DE TESTE (Canais abertos do Brasil)
-    const urlTeste = "https://raw.githubusercontent.com/LuanElias02/IPTV-Brasileiro/main/lista.m3u";
-    // SEU LINK ORIGINAL (Caso o de teste funcione, voltaremos para este)
-    const urlOriginal = "https://xcloudcine.xyz/get.php?username=619963334&password=327363322&type=m3u_plus";
-
-    async function iniciarTeste() {
-        const btn = document.getElementById('btn-entrar');
-        const msg = document.getElementById('msg');
-        
-        btn.classList.add('conectando');
-        msg.innerText = "Sincronizando servidores...";
-
-        try {
-            // Tenta carregar a lista de teste via proxy para evitar bloqueios
-            const proxy = "https://api.allorigins.win/raw?url=";
-            const resp = await fetch(proxy + encodeURIComponent(urlTeste));
-            const texto = await resp.text();
-            
-            if (!texto.includes("#EXTM3U")) throw new Error();
-
-            processar(texto);
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            mostrar('CANAIS');
-        } catch (e) {
-            msg.innerText = "Erro de conexão. Verifique sua internet.";
-            btn.classList.remove('conectando');
-        }
-    }
-
-    function processar(data) {
-        const linhas = data.split('\n');
-        linhas.forEach((linha, i) => {
-            if (linha.includes('#EXTINF:')) {
-                const nome = linha.split(',')[1] || "Canal TV";
-                const logo = linha.match(/tvg-logo="([^"]+)"/)?.[1] || "";
-                const link = linhas[i+1]?.trim();
-                
-                if (link && link.startsWith('http')) {
-                    const item = { nome, logo, link };
-                    // Organiza baseado no conteúdo do link
-                    if (link.includes('.mp4') || link.includes('.mkv') || nome.toLowerCase().includes('filme')) {
-                        dados.FILMES.push(item);
-                    } else {
-                        dados.CANAIS.push(item);
-                    }
-                }
-            }
-        });
-    }
-
-    function mostrar(cat) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + cat.toLowerCase()).classList.add('active');
-        
-        const grid = document.getElementById('grid');
-        grid.innerHTML = dados[cat].map(i => `
-            <div class="card" onclick="play('${i.link}')">
-                <img src="${i.logo}" onerror="this.src='https://via.placeholder.com/120x180/111/00d4ff?text=URSO+TV'">
-                <p>${i.nome}</p>
+        <div class="grid-menu">
+            <div class="menu-item" onclick="abrirCat('CANAIS')">
+                <div style="font-size: 30px;">📺</div><span>TV AO VIVO</span>
             </div>
-        `).join('');
-    }
+            <div class="menu-item" onclick="abrirCat('FILMES')">
+                <div style="font-size: 30px;">🎬</div><span>FILMES</span>
+            </div>
+            <div class="menu-item" onclick="abrirCat('SERIES')">
+                <div style="font-size: 30px;">🍿</div><span>SÉRIES</span>
+            </div>
+        </div>
+    </div>
 
-    const hls = new Hls();
-    function play(url) {
-        const p = document.getElementById('player');
-        const v = document.getElementById('vid');
-        p.style.display = 'block';
-        
-        if (Hls.isSupported()) {
-            hls.loadSource(url);
-            hls.attachMedia(v);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => v.play());
-        } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-            v.src = url;
-            v.play();
-        }
-    }
-
-    function fechar() {
-        document.getElementById('player').style.display = 'none';
-        document.getElementById('vid').pause();
-        hls.detachMedia();
-    }
-</script>
-</body>
-</html>
+    <div id="content-view">
+        <button onclick="voltarAoPainel()" style="background:none; border:none; color:var(--primary); font-weight:bold; cursor:pointer; padding: 10
