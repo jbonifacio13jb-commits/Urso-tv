@@ -1,1 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UrsoTv Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --primary: #00d4ff; --bg: #000000; --card: #121212; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+
+        /* TELA DE LOGIN / SERVIDORES */
+        #login-screen { 
+            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000;
+            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1574267432553-4b2026644867?q=80&w=1932&auto=format&fit=crop');
+            background-size: cover; background-position: center;
+        }
+        .login-box { width: 90%; max-width: 450px; text-align: center; padding: 25px; background: rgba(0,0,0,0.7); border-radius: 20px; backdrop-filter: blur(10px); border: 1px solid #333; }
+        .logo-img { width: 110px; margin-bottom: 10px; border-radius: 15px; box-shadow: 0 0 20px var(--primary); }
+        
+        .server-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-server { padding: 14px; background: #1a1a1a; border: 2px solid #333; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-server:focus { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+
+        /* INTERFACE PAISAGEM */
+        #main-app { display: none; height: 100vh; flex-direction: row; }
+        .side-bar { width: 200px; background: #080808; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid #222; }
+        .cat-item { padding: 12px; margin-bottom: 8px; background: #151515; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; border: 2px solid transparent; }
+        .cat-item.active, .cat-item:focus { border-color: var(--primary); background: var(--primary); color: #000; outline: none; }
+
+        .content-area { flex: 1; overflow-y: auto; padding: 15px; display: grid; gap: 15px; }
+        .grid-channels { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        .grid-posters { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+
+        .card { background: var(--card); border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; }
+        .card:focus { border-color: var(--primary); transform: scale(1.05); outline: none; }
+        .card img { width: 100%; object-fit: cover; background: #222; }
+        .card.poster img { aspect-ratio: 2/3; } /* Capas de filmes */
+        .card.thumb img { aspect-ratio: 16/9; } /* Logos de canais */
+        .card p { padding: 6px; margin: 0; font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* PLAYER */
+        #player-container { position: fixed; inset: 0; background: #000; display: none; z-index: 2000; }
+        video { width: 100%; height: 100%; }
+        .player-ui { position: absolute; top: 20px; left: 20px; z-index: 2100; }
+
+        /* MODAL DE SAÍDA */
+        #exit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 5000; }
+        .exit-box { background: #1a1a1a; padding: 25px; border-radius: 15px; text-align: center; border: 1px solid var(--primary); width: 280px; }
+        .exit-btns { display: flex; justify-content: space-around; margin-top: 20px; }
+        .btn-ui { padding: 10px 20px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-yes { background: #ff4d4d; color: white; }
+        .btn-no { background: #444; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="logo.png" class="logo-img" onerror="this.src='https://via.placeholder.com/120/00d4ff/000000?text=URSO+TV'">
+            <h3>URSO TV+ PREMIUM</h3>
+            <div id="server-buttons" class="server-grid"></div>
+            <button class="btn-ui btn-no" style="margin-top: 20px; width: 100%;" onclick="confirmarSair()">SAIR DO APK</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="side-bar">
+            <div class="cat-item active" tabindex="0" onclick="filtrar('CANAIS', this)">CANAIS</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('FILMES', this)">FILMES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('SERIES', this)">SÉRIES</div>
+            <div class="cat-item" tabindex="0" onclick="filtrar('ADULTO', this)" style="color:red">ADULTO 🔞</div>
+            <button class="btn-ui btn-no" style="margin-top: auto;" onclick="window.location.reload()">VOLTAR</button>
+        </div>
+        <div id="content-grid" class="content-area grid-channels"></div>
+    </div>
+
+    <div id="player-container">
+        <div class="player-ui"><button class="btn-ui btn-no" onclick="fecharPlayer()">❮ VOLTAR</button></div>
+        <video id="video" controls></video>
+    </div>
+
+    <div id="exit-modal">
+        <div class="exit-box">
+            <h4>Deseja sair do UrsoTv?</h4>
+            <div class="exit-btns">
+                <button class="btn-ui btn-yes" onclick="window.close()">SIM</button>
+                <button class="btn-ui btn-no" onclick="confirmarSair()">NÃO</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+    const hls = new Hls();
+    const v = document.getElementById('video');
+
+    window.onload = async () => {
+        try {
+            const res = await fetch('Lista.txt');
+            const data = await res.text();
+            const links = data.split('\n').filter(l => l.trim().startsWith('http'));
+            const container = document.getElementById('server-buttons');
+            links.forEach((link, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-server';
+                btn.innerText = `PLAYER ${i+1}`;
+                btn.onclick = () => { document.documentElement.requestFullscreen?.(); conectar(link.trim()); };
+                container.appendChild(btn);
+            });
+            if(container.firstChild) container.firstChild.focus();
+        } catch(e) {}
+    };
+
+    async function conectar(url) {
+        const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+        try {
+            const res = await fetch(proxy);
+            const data = await res.text();
+            organizar(data);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            filtrar('CANAIS', document.querySelector('.cat-item'));
+        } catch(e) { alert("Servidor Indisponível."); }
+    }
+
+    function organizar(data) {
+        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
+        data.split('\n').forEach((line, i, arr) => {
+            if(line.includes('#EXTINF:')) {
+                const url = arr[i+1]?.trim();
+                if(!url || !url.startsWith('http')) return;
+                const item = { name: line.split(',')[1]?.trim() || "C", logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png', url: url };
+                const n = item.name.toLowerCase();
+                if(n.match(/xxx|adult/)) todosConteudos.ADULTO.push(item);
+                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
+                else if(url.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
+                else todosConteudos.CANAIS.push(item);
+            }
+        });
+    }
+
+    function filtrar(cat, el) {
+        if(cat === 'ADULTO' && prompt("Senha:") !== '1313') return;
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('content-grid');
+        const isP = (cat === 'FILMES' || cat === 'SERIES');
+        grid.className = 'content-area ' + (isP ? 'grid-posters' : 'grid-channels');
+        grid.innerHTML = todosConteudos[cat].map(item => `
+            <div class="card ${isP?'poster':'thumb'}" tabindex="0" onclick="play('${item.url}')">
+                <img src="${item.logo}" onerror="this.src='logo.png'">
+                <p>${item.name}</p>
+            </div>
+        `).join('');
+    }
+
+    function play(url) {
+        document.getElementById('player-container').style.display = 'block';
+        if(Hls.isSupported()) { hls.loadSource(url); hls.attachMedia(v); v.play(); }
+        else { v.src = url; v.play(); }
+    }
+
+    function fecharPlayer() { document.getElementById('player-container').style.display='none'; v.pause(); }
+    function confirmarSair() {
+        const m = document.getElementById('exit-modal');
+        m.style.display = (m.style.display === 'flex' ? 'none' : 'flex');
+    }
+</script>
+</body>
+</html>
 
