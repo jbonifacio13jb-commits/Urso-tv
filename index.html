@@ -7,10 +7,10 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #000000; --card: #121212; }
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
 
-        /* TELA DE LOGIN */
+        /* TELA DE LOGIN / SERVIDORES */
         #login-screen { 
             position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000;
             background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://images.unsplash.com/photo-1574267432553-4b2026644867?q=80&w=1932&auto=format&fit=crop');
@@ -46,8 +46,9 @@
         .btn-ui { padding: 10px 20px; background: rgba(0,0,0,0.6); color: white; border-radius: 50px; border: 1px solid #444; cursor: pointer; font-weight: bold; }
 
         /* MODAL SAÍDA */
-        #exit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 5000; }
-        .exit-box { background: #1a1a1a; padding: 30px; border-radius: 15px; text-align: center; border: 1px solid var(--primary); }
+        #exit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 5000; }
+        .exit-box { background: #1a1a1a; padding: 35px; border-radius: 20px; text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 30px rgba(0,212,255,0.2); }
+        .btn-exit { padding: 12px 40px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -55,8 +56,8 @@
     <div id="login-screen">
         <div class="login-box">
             <img src="logo.png" class="logo-img" onerror="this.src='https://via.placeholder.com/120/00d4ff/000000?text=URSO+TV'">
-            <h2>URSO TV+ PREMIUM</h2>
-            <p id="status-msg" style="color: #888;">Procurando lista de canais...</p>
+            <h2 style="margin-bottom: 5px;">URSO TV+ PREMIUM</h2>
+            <p id="status-msg" style="color: #888; font-size: 14px;">Carregando servidores...</p>
             <div id="server-buttons" class="server-grid"></div>
             <button class="btn-ui" style="margin-top: 25px; width: 100%;" onclick="toggleExitModal()">SAIR DO APLICATIVO</button>
         </div>
@@ -74,138 +75,4 @@
     </div>
 
     <div id="player-container">
-        <div style="position: absolute; top: 20px; left: 20px; z-index: 2100;">
-            <button class="btn-ui" onclick="fecharPlayer()">❮ VOLTAR</button>
-        </div>
-        <video id="video" controls></video>
-    </div>
-
-    <div id="exit-modal">
-        <div class="exit-box">
-            <h3>Deseja realmente sair?</h3>
-            <button class="btn-ui" style="background: red;" onclick="window.close()">SIM</button>
-            <button class="btn-ui" onclick="toggleExitModal()">NÃO</button>
-        </div>
-    </div>
-
-<script>
-    let todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
-    const hls = new Hls();
-    const v = document.getElementById('video');
-
-    // BUSCA FLEXÍVEL DE ARQUIVOS
-    async function buscarLista() {
-        const variacoes = ['Lista.txt', 'Listas.txt', 'lista.txt', 'listas.txt'];
-        for (let nome of variacoes) {
-            try {
-                const res = await fetch(nome + '?v=' + Date.now()); // Evita cache
-                if (res.ok) {
-                    console.log("Arquivo encontrado:", nome);
-                    return await res.text();
-                }
-            } catch (e) {}
-        }
-        return null;
-    }
-
-    window.onload = async () => {
-        const data = await buscarLista();
-        if (!data) {
-            document.getElementById('status-msg').innerText = "Erro: Nenhuma lista (Lista.txt ou Listas.txt) encontrada.";
-            return;
-        }
-
-        const links = data.split('\n').filter(l => l.trim().startsWith('http'));
-        const container = document.getElementById('server-buttons');
-        
-        if (links.length === 0) {
-            document.getElementById('status-msg').innerText = "Erro: A lista está vazia ou sem links válidos.";
-            return;
-        }
-
-        links.forEach((link, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-server';
-            btn.innerText = `SERVIDOR ${i+1}`;
-            btn.onclick = () => {
-                if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-                conectar(link.trim());
-            };
-            container.appendChild(btn);
-        });
-        document.getElementById('status-msg').innerText = "Selecione um Servidor:";
-        if(container.firstChild) container.firstChild.focus();
-    };
-
-    async function conectar(url) {
-        const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-        document.getElementById('status-msg').innerText = "Conectando...";
-        try {
-            const res = await fetch(proxy);
-            if (!res.ok) throw new Error();
-            const data = await res.text();
-            organizar(data);
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            filtrar('CANAIS', document.querySelector('.cat-item'));
-        } catch(e) { 
-            alert("Erro ao conectar neste servidor. Tente outro."); 
-            document.getElementById('status-msg').innerText = "Selecione outro Servidor:";
-        }
-    }
-
-    function organizar(data) {
-        todosConteudos = { CANAIS: [], FILMES: [], SERIES: [], ADULTO: [] };
-        data.split('\n').forEach((line, i, arr) => {
-            if(line.includes('#EXTINF:')) {
-                const url = arr[i+1]?.trim();
-                if(!url || !url.startsWith('http')) return;
-                const item = { 
-                    name: line.split(',')[1]?.trim() || "Canal", 
-                    logo: line.match(/tvg-logo="([^"]+)"/)?.[1] || 'logo.png', 
-                    url: url 
-                };
-                const n = item.name.toLowerCase();
-                if(n.match(/xxx|adult/)) todosConteudos.ADULTO.push(item);
-                else if(n.match(/s0|s1|e0|e1/)) todosConteudos.SERIES.push(item);
-                else if(url.match(/\.mp4|\.mkv/)) todosConteudos.FILMES.push(item);
-                else todosConteudos.CANAIS.push(item);
-            }
-        });
-    }
-
-    function filtrar(cat, el) {
-        if(cat === 'ADULTO' && prompt("Senha:") !== '1313') return;
-        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-        const grid = document.getElementById('content-grid');
-        const isP = (cat === 'FILMES' || cat === 'SERIES');
-        grid.className = 'content-area ' + (isP ? 'grid-posters' : 'grid-channels');
-        grid.innerHTML = todosConteudos[cat].map(item => `
-            <div class="card ${isP ? 'poster' : 'thumb'}" tabindex="0" onclick="play('${item.url}')">
-                <img src="${item.logo}" onerror="this.src='logo.png'">
-                <p>${item.name}</p>
-            </div>
-        `).join('');
-    }
-
-    function play(url) {
-        document.getElementById('player-container').style.display = 'block';
-        if(Hls.isSupported()) { 
-            hls.loadSource(url); 
-            hls.attachMedia(v); 
-            hls.on(Hls.Events.MANIFEST_PARSED, () => v.play());
-        } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-            v.src = url;
-            v.play();
-        }
-    }
-
-    function fecharPlayer() { document.getElementById('player-container').style.display = 'none'; v.pause(); }
-    function toggleExitModal() {
-        const m = document.getElementById('exit-modal');
-        m.style.display = (m.style.display === 'flex' ? 'none' : 'flex');
-    }
-</script>
-</body>
-</html>
+        <div style="position:
