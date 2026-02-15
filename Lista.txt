@@ -1,1 +1,2 @@
-
+http://mais.tvhome.click:80/get.php?username=ONNEPLAY&password=0511605511&type=m3u_plus
+http://clarotv.org:80/get.php?username=Gilmar2424&password=f3Zq4T&type=m3u_plus
