@@ -2,104 +2,72 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>URSOTV PRO</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrsoTV Premium</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/93/93634.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    
     <style>
-        :root { --neon: #00d4ff; --glow: rgba(0, 212, 255, 0.6); }
-        
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100vh; 
-            background: #000; color: white; font-family: 'Segoe UI', sans-serif; 
-            overflow: hidden; position: fixed;
-        }
-
-        .main-bg {
-            position: fixed; inset: 0;
-            background: radial-gradient(circle at center, #001a2e 0%, #000 100%);
-            z-index: -1;
-        }
-
-        /* BOTÃO TELA CHEIA PARA REMOVER BARRA SUPERIOR */
-        .fs-toggle {
-            position: fixed; top: 15px; right: 15px; z-index: 1001;
-            background: rgba(0, 212, 255, 0.2); border: 1px solid var(--neon);
-            color: var(--neon); width: 45px; height: 45px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; backdrop-filter: blur(10px); font-size: 22px;
-            box-shadow: 0 0 15px var(--glow);
-        }
-
-        #dashboard { 
-            display: flex; height: 100vh; flex-direction: column; 
-            align-items: center; justify-content: center; padding: 0 20px;
-        }
-
-        .logo-neon { 
-            width: 110px; margin-bottom: 5px; 
-            filter: drop-shadow(0 0 20px var(--neon));
-        }
-
-        .grid-menu { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; 
-            width: 100%; max-width: 500px; z-index: 10;
-        }
-
-        .menu-item { 
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 20px; 
-            padding: 25px 10px; text-align: center; cursor: pointer; transition: 0.3s;
-        }
-
-        .menu-item i { font-size: 40px; display: block; margin-bottom: 10px; }
-        .menu-item span { font-size: 14px; font-weight: 900; text-transform: uppercase; }
-
-        #view { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); flex-direction: column; padding: 25px; z-index: 100; backdrop-filter: blur(20px); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; overflow-y: auto; }
-        .card { background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid #333; overflow: hidden; }
-
-        #player { position: fixed; inset: 0; background: #000; display: none; z-index: 2000; }
-        video { width: 100%; height: 100%; }
+        body { background-color: #0f172a; overflow: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar { height: calc(100vh - 80px); overflow-y: auto; scroll-behavior: smooth; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 10px; }
+        .channel-item { border-left: 4px solid transparent; transition: all 0.2s; }
+        .channel-item:hover { background: rgba(245, 158, 11, 0.15); border-left-color: #f59e0b; }
+        .active-channel { background: rgba(245, 158, 11, 0.25); border-left-color: #fbbf24; font-weight: bold; }
+        #urso-player { width: 100% !important; height: 100% !important; border-radius: 8px; }
     </style>
 </head>
-<body onclick="entrarImersivo()">
+<body class="text-white font-sans">
 
-    <div class="main-bg"></div>
-    <div class="fs-toggle" onclick="toggleFS(event)">⛶</div>
-
-    <div id="dashboard">
-        <img src="logo.png" class="logo-neon" onerror="this.src='https://via.placeholder.com/150/00d4ff/000?text=URSO'">
-        <h1 style="margin: 0 0 35px 0; font-weight: 900; font-size: 32px;">URSO<span style="color:var(--neon)">TV PRO</span></h1>
+    <header class="h-20 glass flex flex-col md:flex-row items-center justify-between px-6 z-10 relative gap-4 py-2 md:py-0">
+        <h1 class="text-2xl font-black text-yellow-500 tracking-tighter shrink-0">UrsoTV <span class="text-white font-light italic text-lg uppercase">Premium</span></h1>
         
-        <div class="grid-menu">
-            <div class="menu-item" onclick="abrir('CANAIS')"><i>📺</i><span>Canais</span></div>
-            <div class="menu-item" onclick="abrir('FILMES')"><i>🎬</i><span>Filmes</span></div>
-            <div class="menu-item" onclick="abrir('SERIES')"><i>🍿</i><span>Séries</span></div>
-            <div class="menu-item" onclick="document.getElementById('f-in').click()" style="border-style: dashed;"><i>📂</i><span>M3U Local</span></div>
+        <div class="flex gap-2 w-full max-w-2xl">
+            <input type="text" id="m3uUrl" 
+                   class="bg-gray-900 border border-gray-700 rounded-l-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all text-yellow-100" 
+                   placeholder="Cole o link da lista .m3u aqui...">
+            <button onclick="loadPlaylist()" 
+                    class="bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold px-6 py-2 rounded-r-xl text-sm transition-all shadow-lg active:scale-95">
+                CARREGAR
+            </button>
         </div>
-        
-        <div id="status" style="margin-top:25px; color:var(--neon); font-size:12px; font-weight:bold;">SISTEMA ONLINE</div>
-        <input type="file" id="f-in" style="display:none" accept=".m3u,.m3u8" onchange="carregarLocal(this)">
-    </div>
+    </header>
 
-    <div id="view">
-        <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
-            <button onclick="voltar()" style="background:var(--neon); border:none; color:#000; padding:12px 30px; border-radius:35px; font-weight:900;">❮ VOLTAR</button>
-            <span id="cat-label" style="color:var(--neon); font-weight:900;"></span>
-        </div>
-        <div id="main-grid" class="grid"></div>
-    </div>
+    <main class="flex h-screen flex-col md:flex-row">
+        <aside class="w-full md:w-80 bg-gray-900 border-r border-gray-800 sidebar order-2 md:order-1" id="sidebar">
+            <div class="p-4 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-800">
+                <span>Lista de Canais</span>
+                <span id="count" class="bg-yellow-500 text-black px-2 py-0.5 rounded">0</span>
+            </div>
+            <ul id="channelList" class="flex flex-col">
+                <li class="p-10 text-center text-gray-500 italic">Aguardando lista...</li>
+            </ul>
+        </aside>
 
-    <div id="player">
-        <button style="position:absolute; top:30px; left:30px; z-index:2100; padding:15px 35px; background:var(--neon); border:none; border-radius:40px; font-weight:900;" onclick="fechar()">VOLTAR</button>
-        <video id="vid" controls></video>
-    </div>
+        <section class="flex-1 bg-black flex items-center justify-center p-2 md:p-6 order-1 md:order-2 relative">
+            <div class="w-full aspect-video shadow-2xl rounded-xl overflow-hidden bg-gray-950">
+                <video id="urso-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" poster="https://img.freepik.com/fotos-premium/fundo-abstrato-do-logotipo-da-ia-gerado-pelo-urso_1020495-20038.jpg">
+                    <p class="vjs-no-js">Habilite o JavaScript para assistir.</p>
+                </video>
+            </div>
+        </section>
+    </main>
 
-<script>
-    let dados = { CANAIS: [], FILMES: [], SERIES: [] };
-    const hls = new Hls();
-    
-    // URL EMBUTIDA CONFORME SOLICITADO
-    const linkBase = "http://inter.py84.eu/get.php?username=paulo9665&password=83034153782&type=m3u";
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script>
+        var player = videojs('urso-player');
 
-    function entrarImersivo() {
+        async function loadPlaylist() {
+            const url = document.getElementById('m3uUrl').value.trim();
+            if (!url) return alert("⚠️ Por favor, cole uma URL válida!");
+
+            const listElement = document.getElementById('channelList');
+            listElement.innerHTML = '<li class="p-10 text-center text
