@@ -5,149 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URSOTV PRO</title>
     <style>
-        :root { 
-            --neon-blue: #00f2ff; 
-            --neon-green: #00ff88;
-            --neon-red: #ff3366;
-            --bg-dark: #050505;
-        }
-        
+        :root { --neon-blue: #00f2ff; --bg-dark: #050505; }
         body { 
             background: radial-gradient(circle, #0a1a20 0%, #000 100%); 
-            color: white; font-family: 'Segoe UI', sans-serif; 
-            margin: 0; padding: 0; display: flex; flex-direction: column; 
-            height: 100vh; overflow: hidden; align-items: center; justify-content: center;
+            color: white; font-family: sans-serif; 
+            margin: 0; display: flex; flex-direction: column; 
+            height: 100vh; align-items: center; justify-content: center;
         }
-
-        .brand-center { text-align: center; margin-bottom: 40px; }
-        .pata { 
-            font-size: 80px; 
-            color: var(--neon-blue);
-            text-shadow: 0 0 20px var(--neon-blue);
-            margin-bottom: 10px;
-        }
-        .brand-text { font-size: 32px; font-weight: 900; letter-spacing: 5px; text-transform: uppercase; }
-
-        .loader-container { width: 80%; max-width: 400px; margin-bottom: 30px; }
-        #status-txt { color: var(--neon-blue); font-size: 12px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
-        .prog-bg { width: 100%; height: 6px; background: rgba(0, 242, 255, 0.1); border-radius: 3px; overflow: hidden; }
-        .prog-fill { width: 0%; height: 100%; background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); transition: width 0.3s; }
-
-        .srv-row { display: flex; gap: 10px; width: 90%; max-width: 450px; justify-content: center; }
+        .brand { text-align: center; margin-bottom: 30px; }
+        .pata { font-size: 80px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
+        .brand-text { font-size: 28px; font-weight: 900; letter-spacing: 3px; }
+        
+        .srv-container { display: flex; gap: 10px; width: 90%; max-width: 400px; }
         .srv-btn { 
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-            padding: 15px 5px; border-radius: 10px; font-weight: bold;
-            color: #666; font-size: 10px; text-align: center; transition: 0.3s;
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--neon-blue); 
+            padding: 20px 10px; border-radius: 12px; color: var(--neon-blue);
+            font-weight: bold; cursor: pointer; text-align: center; text-decoration: none;
         }
-
-        .srv-btn.testing { border-color: var(--neon-blue); color: var(--neon-blue); }
-        .srv-btn.online { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0, 255, 136, 0.1); }
-        .srv-btn.offline { border-color: var(--neon-red); color: var(--neon-red); background: rgba(255, 51, 102, 0.1); }
-
-        #final-exit-btn { 
-            display: none; margin-top: 20px; background: var(--neon-red); color: white; 
-            border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; 
-            cursor: pointer; box-shadow: 0 0 20px var(--neon-red);
-        }
+        .srv-btn:active { background: var(--neon-blue); color: black; }
+        .info { margin-top: 20px; font-size: 10px; color: #555; }
     </style>
 </head>
 <body>
 
-    <div class="brand-center">
+    <div class="brand">
         <div class="pata">🐾</div>
         <div class="brand-text">URSOTV PRO</div>
     </div>
 
-    <div class="loader-container">
-        <div id="status-txt">Iniciando Varredura...</div>
-        <div class="prog-bg"><div id="bar" class="prog-fill"></div></div>
+    <div class="srv-container">
+        <div class="srv-btn" onclick="openPlayer(0)">SERVIDOR 01</div>
+        <div class="srv-btn" onclick="openPlayer(1)">SERVIDOR 02</div>
+        <div class="srv-btn" onclick="openPlayer(2)">SERVIDOR 03</div>
     </div>
 
-    <div class="srv-row">
-        <div class="srv-btn" id="s0">SRV 01</div>
-        <div class="srv-btn" id="s1">SRV 02</div>
-        <div class="srv-btn" id="s2">SRV 03</div>
-    </div>
-
-    <button id="final-exit-btn" onclick="window.close()">SAIR DO APLICATIVO</button>
+    <div class="info">Selecione um servidor para abrir no Player</div>
 
 <script>
-    const playlistUrls = [
+    const links = [
         "http://dj.chefemcasa.store:8080/get.php?username=adl021222&password=iptvemcasa@1&type=m3u_plus",
         "http://provedorduo.xyz/get.php?username=09927119&password=49290268&type=m3u_plus",
         "http://rede.tvno.site/get.php?username=valdeciz0112&password=jfbq91564521&type=m3u_plus"
     ];
 
-    let currentTry = 0;
-    let hasReloaded = sessionStorage.getItem('reloaded') === 'true';
-
-    async function checkAndLaunch() {
-        if (currentTry >= playlistUrls.length) {
-            if (!hasReloaded) {
-                sessionStorage.setItem('reloaded', 'true');
-                document.getElementById('status-txt').innerText = "RECALIBRANDO...";
-                setTimeout(() => location.reload(), 2000);
-            } else {
-                sessionStorage.removeItem('reloaded');
-                document.getElementById('status-txt').innerText = "ERRO DE CONEXÃO";
-                document.getElementById('status-txt').style.color = "var(--neon-red)";
-                document.getElementById('final-exit-btn').style.display = "block";
-            }
-            return;
-        }
-
-        const btn = document.getElementById('s' + currentTry);
-        btn.className = 'srv-btn testing';
+    function openPlayer(i) {
+        const url = links[i];
         
-        const bar = document.getElementById('bar');
-        bar.style.transition = "width 10s linear";
-        bar.style.width = "100%";
+        // Formato de Intent que evita o erro "Item não encontrado"
+        // Tenta abrir o OTT Navigator primeiro, que é o mais compatível
+        const intent = `intent:${url}#Intent;type=video/*;package=com.studio5.ottnavigator;scheme=http;S.title=URSOTV%20PRO;end`;
+        
+        // Fallback para Wuffy Player caso o OTT não esteja instalado
+        const wuffy = `intent:${url}#Intent;type=video/*;package=com.wuffy.player;scheme=http;S.title=URSOTV%20PRO;end`;
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        // Executa a tentativa
+        window.location.href = intent;
 
-        try {
-            // Teste de sinal com User-Agent comum para evitar bloqueio
-            await fetch(playlistUrls[currentTry], { 
-                mode: 'no-cors', 
-                headers: { 'User-Agent': 'Mozilla/5.0' },
-                signal: controller.signal 
-            });
-            clearTimeout(timeoutId);
-            
-            btn.className = 'srv-btn online';
-            document.getElementById('status-txt').innerText = "SINAL ATIVO!";
-            document.getElementById('status-txt').style.color = "var(--neon-green)";
-            
-            launchPlayer(playlistUrls[currentTry]);
-
-        } catch (e) {
-            btn.className = 'srv-btn offline';
-            bar.style.transition = "0s";
-            bar.style.width = "0%";
-            currentTry++;
-            checkAndLaunch();
-        }
-    }
-
-    function launchPlayer(url) {
-        // Encapsulamento correto para abrir a LISTA inteira
-        // Usamos o intent direto com o mimetype de áudio/vídeo
-        const ottIntent = `intent:${url}#Intent;type=video/*;package=com.studio5.ottnavigator;scheme=http;S.title=URSOTV%20PRO;end`;
-        const wuffyIntent = `intent:${url}#Intent;type=video/*;package=com.wuffy.player;scheme=http;S.title=URSOTV%20PRO;end`;
-
+        // Se após 1.5s não mudar de tela, tenta o Wuffy
         setTimeout(() => {
-            // Tenta abrir no OTT Navigator primeiro, pois ele lê melhor listas get.php
-            window.location.href = ottIntent;
-            
-            // Backup para o Wuffy Player
-            setTimeout(() => {
-                window.location.href = wuffyIntent;
-            }, 1500);
-        }, 1000);
+            window.location.href = wuffy;
+        }, 1500);
     }
-
-    window.onload = checkAndLaunch;
 </script>
 </body>
 </html>
