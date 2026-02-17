@@ -3,54 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSOTV PRO - Link Externo</title>
+    <title>URSOTV PRO - Auto VLC</title>
     <style>
         :root { --gold: #ffcc00; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; overflow: hidden; }
         
         .header { padding: 15px; background: #111; border-bottom: 2px solid var(--gold); }
-        .pata { font-size: 30px; margin-bottom: 5px; }
+        .pata { font-size: 30px; filter: drop-shadow(0 0 5px var(--gold)); }
         
-        .btn-group { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
+        .btn-group { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
         button { 
-            background: #1a1a1a; color: var(--gold); border: 2px solid var(--gold); 
-            padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); 
+            padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px;
         }
-        button.active { background: var(--gold); color: black; }
+        button.active { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
 
-        .status-box { 
-            width: 80%; max-width: 400px; margin: 40px auto; background: #111; 
-            padding: 20px; border-radius: 15px; border: 1px solid #333;
+        .scan-container { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 320px; background: #111; padding: 25px; border-radius: 15px; border: 1px solid #333;
         }
-        .prog-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; margin: 15px 0; overflow: hidden; }
-        .prog-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s; }
+        .prog-bg { width: 100%; height: 8px; background: #222; border-radius: 4px; margin: 15px 0; overflow: hidden; }
+        .prog-fill { width: 0%; height: 100%; background: var(--gold); box-shadow: 0 0 8px var(--gold); transition: width 0.2s; }
         
-        .vlc-btn { 
-            display: none; background: #ff8800; color: white; border: none; 
-            padding: 15px 30px; border-radius: 30px; font-size: 16px; font-weight: bold;
-            margin-top: 20px; text-decoration: none;
-        }
+        #msg { font-weight: bold; color: var(--gold); font-size: 14px; }
+        #detail { font-size: 11px; color: #777; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div class="pata">🐾</div>
-    <div style="font-size: 22px; font-weight: 900;">URSOTV <span style="color:var(--gold)">PRO</span></div>
-    
+    <div style="font-size: 20px; font-weight: 900;">URSOTV <span style="color:var(--gold)">PRO</span></div>
     <div class="btn-group">
-        <button onclick="scan(0, this)" id="b0">SERV 01</button>
-        <button onclick="scan(1, this)">SERV 02</button>
-        <button onclick="scan(2, this)">SERV 03</button>
+        <button onclick="startAuto(0, this)" id="b0">SERV 01</button>
+        <button onclick="startAuto(1, this)">SERV 02</button>
+        <button onclick="startAuto(2, this)">SERV 03</button>
     </div>
 </div>
 
-<div class="status-box" id="box">
-    <div id="msg" style="color: var(--gold); font-weight: bold;">Selecione um Servidor</div>
+<div class="scan-container">
+    <div id="msg">Iniciando Varredura...</div>
     <div class="prog-bg"><div id="bar" class="prog-fill"></div></div>
-    <div id="detail" style="font-size: 12px; color: #777;">Aguardando início...</div>
-    
-    <a href="#" id="vlcLink" class="vlc-btn">ABRIR NO VLC PLAYER 🎥</a>
+    <div id="detail">Buscando sinal compatível...</div>
 </div>
 
 <script>
@@ -62,47 +56,43 @@
 
     let currentID = 1, currentSrv = 0;
 
-    function scan(srvIdx, btn) {
+    function startAuto(srvIdx, btn) {
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentSrv = srvIdx;
         currentID = 1;
-        document.getElementById('vlcLink').style.display = 'none';
-        runScan();
+        run();
     }
 
-    function runScan() {
-        const url = `${bases[currentSrv]}${currentID}.m3u8`;
-        document.getElementById('bar').style.width = (currentID / 500 * 100) + "%";
-        document.getElementById('msg').innerText = "Rastreando Canais...";
+    function run() {
+        const targetUrl = `${bases[currentSrv]}${currentID}.m3u8`;
+        document.getElementById('bar').style.width = (currentID / 100 * 100) + "%";
+        document.getElementById('msg').innerText = "Rastreando Sinal...";
         document.getElementById('detail').innerText = "Testando ID: " + currentID;
 
-        // Simulando verificação rápida de sinal
-        const img = new Image();
-        img.src = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-        
-        // No VLC não precisamos de verificação complexa, 
-        // podemos oferecer o botão de abrir direto após o turbo skip
+        // Simulando verificação de pulo turbo
         setTimeout(() => {
             if(currentID < 100) {
-                currentID += 10;
-                runScan();
+                currentID += 10; // Salto Turbo de 10 em 10
+                run();
             } else {
-                found(url);
+                launchVLC(targetUrl);
             }
-        }, 300);
+        }, 200);
     }
 
-    function found(url) {
-        document.getElementById('msg').innerText = "SINAL PRONTO!";
-        document.getElementById('detail').innerText = "Clique abaixo para reproduzir sem erros.";
-        const vlcBtn = document.getElementById('vlcLink');
-        vlcBtn.style.display = 'inline-block';
+    function launchVLC(url) {
+        document.getElementById('msg').innerText = "🚀 ABRINDO NO VLC...";
+        document.getElementById('detail').innerText = "Aguarde a inicialização externa.";
         
-        // Link especial para disparar o VLC no Android
-        vlcBtn.href = "intent://" + url.replace("http://", "") + "#Intent;scheme=http;package=org.videolan.vlc;end";
+        // Comando Intent para disparar o VLC Player instalado no Android
+        const intentUrl = "intent://" + url.replace("http://", "") + "#Intent;scheme=http;package=org.videolan.vlc;end";
+        
+        // Tenta abrir automaticamente
+        window.location.href = intentUrl;
     }
 
+    // Inicia automaticamente no primeiro servidor ao carregar
     window.onload = () => document.getElementById('b0').click();
 </script>
 </body>
