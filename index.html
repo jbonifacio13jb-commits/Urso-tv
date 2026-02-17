@@ -8,64 +8,25 @@
         :root { --neon-blue: #00f2ff; --bg-dark: #050505; }
         body { 
             background: radial-gradient(circle, #0a1a20 0%, #000 100%); 
-            color: white; font-family: sans-serif; 
+            color: white; font-family: 'Segoe UI', sans-serif; 
             margin: 0; display: flex; flex-direction: column; 
             height: 100vh; align-items: center; justify-content: center;
         }
-        .brand { text-align: center; margin-bottom: 30px; }
-        .pata { font-size: 80px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
-        .brand-text { font-size: 28px; font-weight: 900; letter-spacing: 3px; }
-        
-        .srv-container { display: flex; gap: 10px; width: 90%; max-width: 400px; }
-        .srv-btn { 
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--neon-blue); 
-            padding: 20px 10px; border-radius: 12px; color: var(--neon-blue);
-            font-weight: bold; cursor: pointer; text-align: center; text-decoration: none;
+        .brand { text-align: center; margin-bottom: 50px; }
+        .pata { font-size: 80px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 10px; }
+        .brand-text { font-size: 32px; font-weight: 900; letter-spacing: 5px; }
+
+        .srv-container { 
+            display: flex; gap: 15px; width: 90%; max-width: 500px; 
+            justify-content: center; flex-wrap: wrap;
         }
-        .srv-btn:active { background: var(--neon-blue); color: black; }
-        .info { margin-top: 20px; font-size: 10px; color: #555; }
-    </style>
-</head>
-<body>
-
-    <div class="brand">
-        <div class="pata">🐾</div>
-        <div class="brand-text">URSOTV PRO</div>
-    </div>
-
-    <div class="srv-container">
-        <div class="srv-btn" onclick="openPlayer(0)">SERVIDOR 01</div>
-        <div class="srv-btn" onclick="openPlayer(1)">SERVIDOR 02</div>
-        <div class="srv-btn" onclick="openPlayer(2)">SERVIDOR 03</div>
-    </div>
-
-    <div class="info">Selecione um servidor para abrir no Player</div>
-
-<script>
-    const links = [
-        "http://dj.chefemcasa.store:8080/get.php?username=adl021222&password=iptvemcasa@1&type=m3u_plus",
-        "http://provedorduo.xyz/get.php?username=09927119&password=49290268&type=m3u_plus",
-        "http://rede.tvno.site/get.php?username=valdeciz0112&password=jfbq91564521&type=m3u_plus"
-    ];
-
-    function openPlayer(i) {
-        const url = links[i];
+        .srv-btn { 
+            flex: 1; min-width: 120px; background: rgba(0, 242, 255, 0.05); 
+            border: 2px solid var(--neon-blue); padding: 20px 10px; 
+            border-radius: 15px; color: white; font-weight: bold; 
+            cursor: pointer; text-align: center; transition: 0.3s;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+        .srv-btn:active { background: var(--neon-blue); color: black; transform: scale(0.95); }
         
-        // Formato de Intent que evita o erro "Item não encontrado"
-        // Tenta abrir o OTT Navigator primeiro, que é o mais compatível
-        const intent = `intent:${url}#Intent;type=video/*;package=com.studio5.ottnavigator;scheme=http;S.title=URSOTV%20PRO;end`;
-        
-        // Fallback para Wuffy Player caso o OTT não esteja instalado
-        const wuffy = `intent:${url}#Intent;type=video/*;package=com.wuffy.player;scheme=http;S.title=URSOTV%20PRO;end`;
-
-        // Executa a tentativa
-        window.location.href = intent;
-
-        // Se após 1.5s não mudar de tela, tenta o Wuffy
-        setTimeout(() => {
-            window.location.href = wuffy;
-        }, 1500);
-    }
-</script>
-</body>
-</html>
+        .footer-msg { margin-top: 30px; font-size: 12px; color: rgba(255,25
