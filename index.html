@@ -3,127 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSOTV PRO - Premium</title>
+    <title>URSOTV PRO - Ultra</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        :root { --primary: #ffcc00; --bg: #0a0a0a; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        
-        /* Cabeçalho e Botões */
-        .header { padding: 15px; background: #111; border-bottom: 2px solid var(--primary); text-align: center; }
-        .btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-        button { 
-            background: #222; color: var(--primary); border: 1px solid var(--primary); 
-            padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; 
-            transition: 0.3s; text-transform: uppercase; font-size: 12px;
-        }
-        button:hover, button.active { background: var(--primary); color: #000; }
-
-        /* Player */
-        #video-wrapper { flex-grow: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
-        video { width: 100%; height: 100%; max-height: 80vh; }
-        
-        .status-msg { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; font-size: 12px; color: var(--primary); z-index: 100; pointer-events: none; }
+        :root { --gold: #ffcc00; --dark: #050505; }
+        body { background: var(--dark); color: white; font-family: sans-serif; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        .menu { background: #111; padding: 15px; display: flex; gap: 10px; justify-content: center; border-bottom: 2px solid var(--gold); }
+        button { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.3s; }
+        button.active { background: var(--gold); color: black; }
+        #container { flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+        video { width: 100%; height: 100%; }
+        #status-bar { position: absolute; bottom: 10px; left: 10px; font-size: 10px; color: #666; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px;">URSOTV PRO - SELECIONE O SERVIDOR</div>
-    <div class="btn-group">
-        <button onclick="changeSource(0, this)" id="default-btn">Servidor 01 (Chefe)</button>
-        <button onclick="changeSource(1, this)">Servidor 02 (Duo)</button>
-        <button onclick="changeSource(2, this)">Servidor 03 (Rede)</button>
-    </div>
+<div class="menu">
+    <button onclick="change(0, this)" id="b0">SERVIDOR 1</button>
+    <button onclick="change(1, this)">SERVIDOR 2</button>
+    <button onclick="change(2, this)">SERVIDOR 3</button>
 </div>
 
-<div id="video-wrapper">
-    <div id="status" class="status-msg">Aguardando seleção...</div>
+<div id="container">
     <video id="player" playsinline controls autoplay muted></video>
+    <div id="status-bar">Pronto para conectar...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
 <script>
-    // Suas URLs fornecidas
-    const urls = [
-        "http://dj.chefemcasa.store:8080/get.php?username=adl021222&password=iptvemcasa@1&type=m3u_plus",
-        "http://provedorduo.xyz/get.php?username=09927119&password=49290268&type=m3u_plus",
-        "http://rede.tvno.site/get.php?username=barreto1766&password=ma257799007&type=m3u_plus"
+    // LISTA DE LINKS (Mude o número final conforme descobrir o ID do canal)
+    const streams = [
+        "http://dj.chefemcasa.store:8080/live/adl021222/iptvemcasa@1/1.m3u8",
+        "http://provedorduo.xyz/live/09927119/49290268/1.m3u8",
+        "http://rede.tvno.site/live/barreto1766/ma257799007/1.m3u8"
     ];
 
-    // Proxies para simular VPN e evitar erro CORS
+    // SISTEMA DE VPN/PROXY PROGRESSIVO
     const proxies = [
-        "", // Direto
-        "https://api.allorigins.win/raw?url=", 
-        "https://corsproxy.io/?",
-        "https://thingproxy.freeboard.io/fetch/"
+        "", // Tentativa 1: Direta
+        "https://api.allorigins.win/raw?url=", // Tentativa 2: Proxy AllOrigins
+        "https://corsproxy.io/?", // Tentativa 3: Proxy IO
+        "https://thingproxy.freeboard.io/fetch/" // Tentativa 4: ThingProxy
     ];
 
-    let currentUrlIndex = 0;
-    let currentProxyIndex = 0;
+    let currentStream = "";
+    let proxyIdx = 0;
     const video = document.getElementById('player');
-    const statusEl = document.getElementById('status');
+    const status = document.getElementById('status-bar');
     let hls = new Hls();
 
-    function updateStatus(msg) { statusEl.innerText = msg; }
-
-    function changeSource(index, btn) {
-        // Estética dos botões
+    function change(idx, btn) {
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
-        currentUrlIndex = index;
-        currentProxyIndex = 0; // Reseta tentativa de proxy para o novo link
-        loadStream(urls[currentUrlIndex]);
+        currentStream = streams[idx];
+        proxyIdx = 0;
+        connect();
     }
 
-    function loadStream(baseUrl) {
-        const proxyPrefix = proxies[currentProxyIndex];
-        const finalUrl = proxyPrefix + encodeURIComponent(baseUrl);
-        
-        updateStatus(currentProxyIndex === 0 ? "Conectando diretamente..." : `Tentando via Túnel VPN ${currentProxyIndex}...`);
+    function connect() {
+        const finalUrl = proxies[proxyIdx] + encodeURIComponent(currentStream);
+        status.innerText = `Conectando via Túnel ${proxyIdx + 1}...`;
 
         if (Hls.isSupported()) {
-            hls.destroy(); // Limpa conexão anterior
-            hls = new Hls({
-                maxBufferLength: 30,
-                enableWorker: true
-            });
+            hls.destroy();
+            hls = new Hls({ xhrSetup: xhr => xhr.withCredentials = false });
             hls.loadSource(finalUrl);
             hls.attachMedia(video);
-            
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                updateStatus("Reproduzindo agora...");
+                status.innerText = "Reproduzindo automaticamente (Mudo)";
                 video.play();
             });
-
-            hls.on(Hls.Events.ERROR, (event, data) => {
+            hls.on(Hls.Events.ERROR, (e, data) => {
                 if (data.fatal) {
-                    tryNextProxy();
+                    proxyIdx++;
+                    if (proxyIdx < proxies.length) connect();
+                    else status.innerText = "Erro: Servidor Offline ou ID inválido.";
                 }
             });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = finalUrl;
         }
     }
 
-    function tryNextProxy() {
-        currentProxyIndex++;
-        if (currentProxyIndex < proxies.length) {
-            loadStream(urls[currentUrlIndex]);
-        } else {
-            updateStatus("Erro: Servidor offline ou bloqueado.");
-        }
-    }
-
-    // Iniciar automaticamente no primeiro servidor
     window.onload = () => {
-        const plyr = new Plyr(video, { autoplay: true, muted: true });
-        document.getElementById('default-btn').click();
+        new Plyr(video, { autoplay: true, muted: true });
+        document.getElementById('b0').click();
     };
 </script>
-
 </body>
 </html>
