@@ -49,12 +49,6 @@
             border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; 
             cursor: pointer; box-shadow: 0 0 20px var(--neon-red);
         }
-
-        .exit-app-corner {
-            position: absolute; bottom: 20px; right: 20px;
-            color: rgba(255, 255, 255, 0.3); font-size: 11px;
-            padding: 5px 15px; border-radius: 20px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
-        }
     </style>
 </head>
 <body>
@@ -76,7 +70,6 @@
     </div>
 
     <button id="final-exit-btn" onclick="window.close()">SAIR DO APLICATIVO</button>
-    <div class="exit-app-corner" onclick="window.close()">SAIR</div>
 
 <script>
     const playlistUrls = [
@@ -114,7 +107,12 @@
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         try {
-            await fetch(playlistUrls[currentTry], { mode: 'no-cors', signal: controller.signal });
+            // Teste de sinal com User-Agent comum para evitar bloqueio
+            await fetch(playlistUrls[currentTry], { 
+                mode: 'no-cors', 
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                signal: controller.signal 
+            });
             clearTimeout(timeoutId);
             
             btn.className = 'srv-btn online';
@@ -133,20 +131,19 @@
     }
 
     function launchPlayer(url) {
-        // Tentativa 1: OTT Navigator (Mais estável para listas M3U-Plus)
+        // Encapsulamento correto para abrir a LISTA inteira
+        // Usamos o intent direto com o mimetype de áudio/vídeo
         const ottIntent = `intent:${url}#Intent;type=video/*;package=com.studio5.ottnavigator;scheme=http;S.title=URSOTV%20PRO;end`;
-        
-        // Tentativa 2: Wuffy Player (Se o OTT não disparar)
         const wuffyIntent = `intent:${url}#Intent;type=video/*;package=com.wuffy.player;scheme=http;S.title=URSOTV%20PRO;end`;
 
         setTimeout(() => {
-            // Tenta abrir o OTT primeiro, se falhar, tenta o Wuffy
+            // Tenta abrir no OTT Navigator primeiro, pois ele lê melhor listas get.php
             window.location.href = ottIntent;
             
-            // Caso o sistema não mude de app em 2 segundos, tenta o Wuffy como plano B
+            // Backup para o Wuffy Player
             setTimeout(() => {
                 window.location.href = wuffyIntent;
-            }, 2000);
+            }, 1500);
         }, 1000);
     }
 
