@@ -5,28 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URSOTV PRO</title>
     <style>
-        :root { --neon-blue: #00f2ff; --bg-dark: #050505; }
-        body { 
-            background: radial-gradient(circle, #0a1a20 0%, #000 100%); 
-            color: white; font-family: 'Segoe UI', sans-serif; 
-            margin: 0; display: flex; flex-direction: column; 
-            height: 100vh; align-items: center; justify-content: center;
-        }
-        .brand { text-align: center; margin-bottom: 50px; }
-        .pata { font-size: 80px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 10px; }
-        .brand-text { font-size: 32px; font-weight: 900; letter-spacing: 5px; }
-
-        .srv-container { 
-            display: flex; gap: 15px; width: 90%; max-width: 500px; 
-            justify-content: center; flex-wrap: wrap;
-        }
-        .srv-btn { 
-            flex: 1; min-width: 120px; background: rgba(0, 242, 255, 0.05); 
-            border: 2px solid var(--neon-blue); padding: 20px 10px; 
-            border-radius: 15px; color: white; font-weight: bold; 
-            cursor: pointer; text-align: center; transition: 0.3s;
-            text-shadow: 0 0 5px var(--neon-blue);
-        }
-        .srv-btn:active { background: var(--neon-blue); color: black; transform: scale(0.95); }
+        :root { --neon: #ccff00; --bg: #0a0a0a; }
         
-        .footer-msg { margin-top: 30px; font-size: 12px; color: rgba(255,25
+        body { 
+            background: var(--bg); color: white; font-family: sans-serif; 
+            margin: 0; padding: 0; display: flex; flex-direction: column; 
+            height: 100vh; align-items: center;
+        }
+
+        /* Topo */
+        .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .logo-txt { font-weight: bold; font-size: 20px; letter-spacing: 1px; }
+
+        /* Logo Central */
+        .main-logo { margin-top: 20px; text-align: center; }
+        .logo-box { 
+            width: 150px; height: 150px; border: 3px solid var(--neon); 
+            border-radius: 20px; display: flex; align-items: center; 
+            justify-content: center; box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
+            background: url('https://i.imgur.com/v6T0WzS.png') center/cover; /* Substitua pela sua URL de logo */
+        }
+        .brand-name { color: var(--neon); font-size: 24px; font-weight: 900; margin-top: 15px; text-shadow: 0 0 10px var(--neon); }
+
+        /* Grade de Botões */
+        .grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
+            width: 90%; max-width: 400px; margin-top: 30px; 
+        }
+        .card { 
+            background: rgba(255,255,255,0.05); border: 1.5px solid var(--neon); 
+            border-radius: 15px; padding: 25px 10px; text-align: center; 
+            cursor: pointer; transition: 0.3s;
+        }
+        .card:active { transform: scale(0.95); background: rgba(204, 255, 0, 0.1); }
+        .card i { font-size: 40px; display: block; margin-bottom: 10px; }
+        .card span { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Status */
+        .system-status { margin-top: auto; color: #00f2ff; font-size: 11px; font-weight: bold; margin-bottom: 60px; }
+
+        /* Rodapé de Funções */
+        .bottom-bar { 
+            position: fixed; bottom: 0; width: 100%; padding: 15px; 
+            display: flex; justify-content: center; gap: 20px; 
+            background: rgba(0,0,0,0.8); border-top: 1px solid #222;
+        }
+        .tool-btn { color: #888; font-size: 11px; text-transform: uppercase; text-decoration: none; border: none; background: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-txt">URSOTV PRO</div>
+        <div style="border: 2px solid var(--neon); padding: 5px; border-radius: 5px; color: var(--neon);">[ ]</div>
+    </div>
+
+    <div class="main-logo">
+        <div class="logo-box"><span style="font-size: 50px;">🐾</span></div>
+        <div class="brand-name">URSOTV PRO</div>
+    </div>
+
+    <div class="grid">
+        <div class="card" onclick="openWuffy(0)"><i>📺</i><span>Canais
