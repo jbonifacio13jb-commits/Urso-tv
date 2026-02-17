@@ -2,7 +2,7 @@
   "servers": [
     {"name": "Servidor 1", "url": "http://inter.py84.eu/get.php?username=ligia123456&password=25228598081&type=m3u", "icon": "star"},
     {"name": "Servidor 2", "url": "http://clarotv.org:80/get.php?username=Gilmar2424&password=f3Zq4T&type=m3u_plus", "icon": "shield"},
-    {"name": "Servidor 3", "url": "http://mais.tvhome.click:80/get.php?username=63563847&password=534384835&type=m3u_plus", "icon": "rocket"}
+    {"name": "Servidor 3", "url": "http://provedorduo.xyz/get.php?username=881101381017&password=896811296068&type=m3u_plus", "icon": "rocket"}
   ],
   "app_name": "URSOTV PRO",
   "version": "1.0.0"
