@@ -17,8 +17,10 @@
         .player-selector { display: none; margin-top: 20px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #333; width: 85%; max-width: 350px; margin-left: auto; margin-right: auto; }
         .player-btn { display: block; width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 13px; color: white; border: none; cursor: pointer; }
         
-        .mx { background: #0084ff; }
-        .extreme { background: #ff004c; }
+        /* Cores dos Players que você tem instalado */
+        .ott { background: #00a8ff; }
+        .player-pro { background: #44bd32; }
+        .unitv { background: #9c88ff; }
 
         .status-box { width: 85%; max-width: 350px; margin: 30px auto; background: #111; padding: 25px; border-radius: 15px; border: 1px solid #333; }
         .prog-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; margin: 15px 0; overflow: hidden; }
@@ -32,21 +34,22 @@
     <div style="font-size: 22px; font-weight: 900;">URSOTV <span style="color:var(--gold)">PRO</span></div>
     <div class="btn-group">
         <button onclick="scan(0, this)" id="b0">SERV 01</button>
-        <button onclick="scan(1, this)" id="b1">SERV 02</button>
-        <button onclick="scan(2, this)" id="b2">SERV 03</button>
+        <button onclick="scan(1, this)">SERV 02</button>
+        <button onclick="scan(2, this)">SERV 03</button>
     </div>
 </div>
 
 <div class="status-box" id="status-ui">
     <div id="msg" style="color: var(--gold); font-weight: bold; font-size: 16px;">AGUARDANDO...</div>
     <div class="prog-bg"><div id="bar" class="prog-fill"></div></div>
-    <div id="detail" style="font-size: 11px; color: #555;">Selecione um servidor no topo</div>
+    <div id="detail">Sintonizando sinal...</div>
 </div>
 
 <div id="player-ui" class="player-selector">
-    <div style="font-size: 12px; margin-bottom: 15px; color: var(--gold); font-weight: bold;">SINAL ENCONTRADO!</div>
-    <button onclick="openPlayer('mx')" class="player-btn mx">ABRIR NO MX PLAYER</button>
-    <button onclick="openPlayer('extreme')" class="player-btn extreme">ABRIR NO IPTV EXTREME</button>
+    <div style="font-size: 12px; margin-bottom: 15px; color: var(--gold); font-weight: bold;">ABRIR EM UM PLAYER INSTALADO:</div>
+    <button onclick="openPlayer('ott')" class="player-btn ott">ABRIR NO OTT NAVIGATOR</button>
+    <button onclick="openPlayer('pro')" class="player-btn player-pro">ABRIR NO IPTV PLAYER PRO</button>
+    <button onclick="openPlayer('unitv')" class="player-btn unitv">ABRIR NO UNITV FREE</button>
 </div>
 
 <script>
@@ -67,38 +70,27 @@
         let count = 0;
         const bar = document.getElementById('bar');
         const timer = setInterval(() => {
-            count += 5;
+            count += 10;
             bar.style.width = count + "%";
-            document.getElementById('msg').innerText = "SINTONIZANDO...";
-            
             if(count >= 100) {
                 clearInterval(timer);
                 currentStreamUrl = serverBases[idx] + "1.m3u8";
                 document.getElementById('status-ui').style.display = 'none';
                 document.getElementById('player-ui').style.display = 'block';
             }
-        }, 30);
+        }, 50);
     }
 
     function openPlayer(type) {
         const cleanUrl = currentStreamUrl.replace(/https?:\/\//, '');
-        let intent = "";
+        let pkg = "";
 
-        if(type === 'mx') {
-            intent = `intent://${cleanUrl}#Intent;scheme=http;type=video/*;package=com.mxtech.videoplayer.ad;S.title=URSOTV%20PRO;end`;
-        } else {
-            // Nova estrutura de chamada para o IPTV Extreme Pro ou Free
-            intent = `intent://${cleanUrl}#Intent;scheme=http;type=video/*;package=com.gomdev.iptvextreme;S.title=URSOTV%20PRO;end`;
-        }
+        if(type === 'ott') pkg = "com.studio5.ottnavigator";
+        else if(type === 'pro') pkg = "com.devcoder.iptvplayerpro";
+        else if(type === 'unitv') pkg = "com.unitv.free";
 
-        window.location.href = intent;
-
-        // Caso o intent falhe, tentamos abrir pelo protocolo direto após 1 segundo
-        setTimeout(() => {
-            if(type === 'extreme') {
-                window.location.href = "iptvextreme://" + currentStreamUrl;
-            }
-        }, 1000);
+        // Disparo via Intent para o app específico
+        window.location.href = `intent://${cleanUrl}#Intent;scheme=http;type=video/*;package=${pkg};S.title=URSOTV%20PRO;end`;
     }
 
     window.onload = () => document.getElementById('b0').click();
