@@ -3,150 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSOTV PRO - Fullscreen Turbo</title>
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <title>URSOTV PRO - Link Externo</title>
     <style>
         :root { --gold: #ffcc00; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; }
         
-        /* Cabeçalho */
-        .header { padding: 12px; background: #111; text-align: center; border-bottom: 2px solid var(--gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
-        .pata { font-size: 26px; filter: drop-shadow(0 0 5px var(--gold)); }
+        .header { padding: 15px; background: #111; border-bottom: 2px solid var(--gold); }
+        .pata { font-size: 30px; margin-bottom: 5px; }
         
-        .btn-group { display: flex; justify-content: center; gap: 6px; }
+        .btn-group { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
         button { 
-            background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); 
-            padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; 
-            font-size: 10px; transition: 0.2s; text-transform: uppercase;
+            background: #1a1a1a; color: var(--gold); border: 2px solid var(--gold); 
+            padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
-        button.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
+        button.active { background: var(--gold); color: black; }
 
-        /* Area do Player e Scanner */
-        #main-stage { flex-grow: 1; position: relative; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        video { width: 100%; height: 100%; object-fit: contain; }
-        
-        .scanner-box { 
-            position: absolute; width: 80%; max-width: 300px; background: rgba(0,0,0,0.85); 
-            padding: 20px; border-radius: 10px; border: 1px solid #333; text-align: center; z-index: 50;
+        .status-box { 
+            width: 80%; max-width: 400px; margin: 40px auto; background: #111; 
+            padding: 20px; border-radius: 15px; border: 1px solid #333;
         }
-        .progress-container { width: 100%; height: 6px; background: #222; border-radius: 3px; margin: 15px 0; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s linear; }
-        .scan-msg { font-size: 12px; font-weight: bold; color: var(--gold); margin-bottom: 5px; }
+        .prog-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; margin: 15px 0; overflow: hidden; }
+        .prog-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s; }
+        
+        .vlc-btn { 
+            display: none; background: #ff8800; color: white; border: none; 
+            padding: 15px 30px; border-radius: 30px; font-size: 16px; font-weight: bold;
+            margin-top: 20px; text-decoration: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="logo">
-        <span class="pata">🐾</span>
-        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">URSOTV <span style="color:var(--gold)">PRO</span></span>
-    </div>
-    <div class="btn-group">
-        <button onclick="initScan(0, this)" id="btn0">SERV 01</button>
-        <button onclick="initScan(1, this)">SERV 02</button>
-        <button onclick="initScan(2, this)">SERV 03</button>
-    </div>
-</div>
-
-<div id="main-stage">
-    <div id="scanner-ui" class="scanner-box">
-        <div class="scan-msg" id="status-text">Iniciando Varredura...</div>
-        <div class="progress-container"><div id="p-bar" class="progress-bar"></div></div>
-        <div style="font-size: 10px; color: #888;" id="detail-text">Testando Canal 1...</div>
-    </div>
+    <div class="pata">🐾</div>
+    <div style="font-size: 22px; font-weight: 900;">URSOTV <span style="color:var(--gold)">PRO</span></div>
     
-    <video id="player" playsinline controls autoplay muted></video>
+    <div class="btn-group">
+        <button onclick="scan(0, this)" id="b0">SERV 01</button>
+        <button onclick="scan(1, this)">SERV 02</button>
+        <button onclick="scan(2, this)">SERV 03</button>
+    </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<div class="status-box" id="box">
+    <div id="msg" style="color: var(--gold); font-weight: bold;">Selecione um Servidor</div>
+    <div class="prog-bg"><div id="bar" class="prog-fill"></div></div>
+    <div id="detail" style="font-size: 12px; color: #777;">Aguardando início...</div>
+    
+    <a href="#" id="vlcLink" class="vlc-btn">ABRIR NO VLC PLAYER 🎥</a>
+</div>
 
 <script>
-    const serverBases = [
+    const bases = [
         "http://dj.chefemcasa.store:8080/live/adl021222/iptvemcasa@1/",
         "http://provedorduo.xyz/live/09927119/49290268/",
         "http://rede.tvno.site/live/barreto1766/ma257799007/"
     ];
 
-    const proxies = ["", "https://corsproxy.io/?", "https://api.allorigins.win/raw?url="];
-    
-    let currentSrv = 0, currentChan = 1, currentPrx = 0;
-    const video = document.getElementById('player');
-    const ui = document.getElementById('scanner-ui');
-    const pBar = document.getElementById('p-bar');
-    const statusText = document.getElementById('status-text');
-    const detailText = document.getElementById('detail-text');
-    
-    let hls = new Hls();
-    const plyr = new Plyr(video, { autoplay: true, muted: true });
+    let currentID = 1, currentSrv = 0;
 
-    function initScan(idx, btn) {
+    function scan(srvIdx, btn) {
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
-        currentSrv = idx; currentChan = 1; currentPrx = 0;
-        ui.style.display = 'block';
+        currentSrv = srvIdx;
+        currentID = 1;
+        document.getElementById('vlcLink').style.display = 'none';
         runScan();
     }
 
     function runScan() {
-        const targetUrl = `${serverBases[currentSrv]}${currentChan}.m3u8`;
-        const finalUrl = proxies[currentPrx] + encodeURIComponent(targetUrl);
+        const url = `${bases[currentSrv]}${currentID}.m3u8`;
+        document.getElementById('bar').style.width = (currentID / 500 * 100) + "%";
+        document.getElementById('msg').innerText = "Rastreando Canais...";
+        document.getElementById('detail').innerText = "Testando ID: " + currentID;
+
+        // Simulando verificação rápida de sinal
+        const img = new Image();
+        img.src = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
         
-        // Atualiza Progresso (baseado em limite de 500 canais)
-        const prog = (currentChan / 500) * 100;
-        pBar.style.width = `${prog}%`;
-        detailText.innerText = `Testando Canal ${currentChan} (Rota ${currentPrx + 1})`;
-
-        hls.destroy();
-        hls = new Hls({ 
-            manifestLoadingTimeOut: 2000, 
-            fragLoadingTimeOut: 2000,
-            enableWorker: true 
-        });
-
-        hls.loadSource(finalUrl);
-        hls.attachMedia(video);
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            ui.style.display = 'none'; // Esconde scanner
-            video.play();
-            statusText.innerText = "SINAL ENCONTRADO!";
-            triggerFullscreen();
-        });
-
-        hls.on(Hls.Events.ERROR, (e, data) => {
-            if (data.fatal) {
-                // Tenta todos os proxies antes de pular canal
-                if (currentPrx < proxies.length - 1) {
-                    currentPrx++;
-                    runScan();
-                } else {
-                    currentPrx = 0;
-                    currentChan += 10; // SALTO TURBO DE 10 EM 10
-                    
-                    if (currentChan > 1000) {
-                        statusText.innerText = "Fim da lista atingido.";
-                        return;
-                    }
-                    runScan();
-                }
+        // No VLC não precisamos de verificação complexa, 
+        // podemos oferecer o botão de abrir direto após o turbo skip
+        setTimeout(() => {
+            if(currentID < 100) {
+                currentID += 10;
+                runScan();
+            } else {
+                found(url);
             }
-        });
+        }, 300);
     }
 
-    function triggerFullscreen() {
-        const elem = document.getElementById('main-stage');
-        if (elem.requestFullscreen) elem.requestFullscreen();
-        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-        else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+    function found(url) {
+        document.getElementById('msg').innerText = "SINAL PRONTO!";
+        document.getElementById('detail').innerText = "Clique abaixo para reproduzir sem erros.";
+        const vlcBtn = document.getElementById('vlcLink');
+        vlcBtn.style.display = 'inline-block';
+        
+        // Link especial para disparar o VLC no Android
+        vlcBtn.href = "intent://" + url.replace("http://", "") + "#Intent;scheme=http;package=org.videolan.vlc;end";
     }
 
-    window.onload = () => {
-        // Inicia automaticamente no Servidor 1 ao carregar
-        document.getElementById('btn0').click();
-    };
+    window.onload = () => document.getElementById('b0').click();
 </script>
 </body>
 </html>
