@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSOTV PRO</title>
+    <title>URSOTV PRO - Auto Wuffy</title>
     <style>
         :root { --gold: #ffcc00; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; display: flex; flex-direction: column; height: 100vh; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; display: flex; flex-direction: column; height: 100vh; justify-content: center; }
         
-        .header { padding: 20px; background: #111; border-bottom: 2px solid var(--gold); }
-        .pata { font-size: 40px; filter: drop-shadow(0 0 10px var(--gold)); margin-bottom: 5px; }
+        .header { position: absolute; top: 0; width: 100%; padding: 20px; background: #111; border-bottom: 2px solid var(--gold); }
+        .pata { font-size: 40px; filter: drop-shadow(0 0 10px var(--gold)); }
         
-        .btn-group { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
-        button.srv-btn { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        button.srv-btn.active { background: var(--gold); color: black; box-shadow: 0 0 15px var(--gold); }
-
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .main-ui { padding: 20px; }
+        .status-txt { color: var(--gold); font-size: 18px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
         
-        .wuffy-card { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 90%; max-width: 350px; }
-        .play-btn { 
-            display: block; width: 100%; background: #00b894; color: white; border: none; 
-            padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; 
-            text-decoration: none; cursor: pointer; margin-top: 15px;
-            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+        .btn-group { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .srv-btn { 
+            width: 80%; max-width: 300px; background: #1a1a1a; color: var(--gold); 
+            border: 2px solid var(--gold); padding: 20px; border-radius: 12px; 
+            font-weight: bold; cursor: pointer; font-size: 16px;
+            transition: 0.2s;
         }
-        
-        .download-link { color: #555; font-size: 12px; margin-top: 20px; text-decoration: none; display: block; }
+        .srv-btn:active { background: var(--gold); color: black; transform: scale(0.95); }
+
+        .footer { position: absolute; bottom: 20px; width: 100%; font-size: 11px; color: #444; }
     </style>
 </head>
 <body>
@@ -33,17 +31,52 @@
 <div class="header">
     <div class="pata">🐾</div>
     <div style="font-size: 24px; font-weight: 900;">URSOTV <span style="color:var(--gold)">PRO</span></div>
+</div>
+
+<div class="main-ui">
+    <div class="status-txt" id="msg">Escolha um Servidor</div>
     
     <div class="btn-group">
-        <button class="srv-btn active" onclick="setSrv(0, this)">SERV 01</button>
-        <button class="srv-btn" onclick="setSrv(1, this)">SERV 02</button>
-        <button class="srv-btn" onclick="setSrv(2, this)">SERV 03</button>
+        <button class="srv-btn" onclick="launch(0)">🚀 ACESSAR SERVIDOR 01</button>
+        <button class="srv-btn" onclick="launch(1)">🚀 ACESSAR SERVIDOR 02</button>
+        <button class="srv-btn" onclick="launch(2)">🚀 ACESSAR SERVIDOR 03</button>
     </div>
 </div>
 
-<div class="main-content">
-    <div class="wuffy-card">
-        <div style="font-size: 14px; color: var(--gold); margin-bottom: 10px;" id="srv-name">SERVIDOR 01 ATIVO</div>
-        <div style="font-size: 12px; color: #888; margin-bottom: 20px;">Sinal pronto para transmissão</div>
+<div class="footer">
+    Requer Wuffy Player instalado • Formato M3U-Plus Ativo
+</div>
+
+<script>
+    // URLs no formato M3U-Plus (incluindo parâmetros de saída m3u8)
+    const serverBases = [
+        "http://dj.chefemcasa.store:8080/get.php?username=adl021222&password=iptvemcasa@1&output=m3u8",
+        "http://provedorduo.xyz/get.php?username=09927119&password=49290268&output=m3u8",
+        "http://rede.tvno.site/get.php?username=barreto1766&password=ma257799007&output=m3u8"
+    ];
+
+    function launch(idx) {
+        const msg = document.getElementById('msg');
+        msg.innerText = "CONECTANDO AO WUFFY...";
         
-        <button onclick="launchWuffy()" class
+        // A URL original m3u-plus
+        const fullUrl = serverBases[idx];
+        
+        // Remove o http:// para construir o Intent
+        const cleanUrl = fullUrl.replace(/https?:\/\//, '');
+        
+        // Comando Intent otimizado:
+        // Envia a URL completa m3u-plus diretamente para o pacote do Wuffy
+        const intent = `intent://${cleanUrl}#Intent;scheme=http;type=video/*;package=com.wuffy.player;S.title=URSOTV%20PRO;end`;
+
+        // Disparo automático
+        window.location.href = intent;
+
+        // Backup caso o Intent demore a responder em alguns aparelhos
+        setTimeout(() => {
+            msg.innerText = "ESCOLHA UM SERVIDOR";
+        }, 3000);
+    }
+</script>
+</body>
+</html>
