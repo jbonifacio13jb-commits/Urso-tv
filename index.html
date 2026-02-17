@@ -7,6 +7,8 @@
     <style>
         :root { 
             --neon-blue: #00f2ff; 
+            --neon-green: #00ff88;
+            --neon-red: #ff3366;
             --bg-dark: #050505;
             --glass: rgba(255, 255, 255, 0.05);
         }
@@ -18,57 +20,49 @@
             height: 100vh; overflow: hidden; align-items: center; justify-content: center;
         }
 
-        /* Identidade Centralizada */
         .brand-center { text-align: center; margin-bottom: 40px; }
         .pata { 
             font-size: 80px; 
             color: var(--neon-blue);
-            text-shadow: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue);
+            text-shadow: 0 0 20px var(--neon-blue);
             margin-bottom: 10px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
         }
         .brand-text { 
             font-size: 32px; font-weight: 900; letter-spacing: 5px; 
             text-transform: uppercase; color: white;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
 
-        /* Barra de Carregamento Neon */
         .loader-container { width: 80%; max-width: 400px; margin-bottom: 30px; }
         #status-txt { color: var(--neon-blue); font-size: 12px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
         .prog-bg { width: 100%; height: 6px; background: rgba(0, 242, 255, 0.1); border-radius: 3px; overflow: hidden; }
         .prog-fill { width: 0%; height: 100%; background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); transition: width 0.3s; }
 
         /* Servidores na Horizontal */
-        .srv-row { 
-            display: flex; gap: 10px; width: 90%; max-width: 450px; justify-content: center; 
-        }
+        .srv-row { display: flex; gap: 10px; width: 90%; max-width: 450px; justify-content: center; }
         .srv-btn { 
-            flex: 1; background: var(--glass); border: 1px solid rgba(0, 242, 255, 0.2); 
-            padding: 15px 5px; border-radius: 10px; font-weight: bold; cursor: pointer;
-            color: #ccc; font-size: 10px; transition: 0.3s; text-align: center;
-        }
-        .srv-btn.active { 
-            border-color: var(--neon-blue); 
-            background: rgba(0, 242, 255, 0.1); 
-            color: var(--neon-blue);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+            flex: 1; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); 
+            padding: 15px 5px; border-radius: 10px; font-weight: bold;
+            color: #666; font-size: 10px; text-align: center; transition: 0.3s;
         }
 
-        /* Sair no canto inferior direito */
-        .exit-app {
+        /* Cores Dinâmicas */
+        .srv-btn.testing { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+        .srv-btn.online { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0, 255, 136, 0.1); box-shadow: 0 0 15px var(--neon-green); }
+        .srv-btn.offline { border-color: var(--neon-red); color: var(--neon-red); background: rgba(255, 51, 102, 0.1); }
+
+        /* Botão Sair no centro (só aparece no erro final) */
+        #final-exit-btn { 
+            display: none; margin-top: 20px; background: var(--neon-red); color: white; 
+            border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; 
+            cursor: pointer; box-shadow: 0 0 20px var(--neon-red);
+        }
+
+        .exit-app-corner {
             position: absolute; bottom: 20px; right: 20px;
             color: rgba(255, 255, 255, 0.3); font-size: 11px;
             text-decoration: none; border: 1px solid rgba(255,255,255,0.1);
             padding: 5px 15px; border-radius: 20px; cursor: pointer;
         }
-        
-        #error-msg { display: none; color: #ff3366; font-size: 12px; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -79,9 +73,8 @@
     </div>
 
     <div class="loader-container">
-        <div id="status-txt">Sintonizando...</div>
+        <div id="status-txt">Iniciando Testes...</div>
         <div class="prog-bg"><div id="bar" class="prog-fill"></div></div>
-        <div id="error-msg">SAIA DO APP E TENTE NOVAMENTE</div>
     </div>
 
     <div class="srv-row">
@@ -90,7 +83,9 @@
         <div class="srv-btn" id="s2">SRV 03</div>
     </div>
 
-    <div class="exit-app" onclick="window.close()">SAIR</div>
+    <button id="final-exit-btn" onclick="window.close()">SAIR DO APLICATIVO</button>
+
+    <div class="exit-app-corner" onclick="window.close()">SAIR</div>
 
 <script>
     const playlistUrls = [
@@ -106,39 +101,46 @@
         if (currentTry >= playlistUrls.length) {
             if (!hasReloaded) {
                 sessionStorage.setItem('reloaded', 'true');
-                document.getElementById('status-txt').innerText = "RECALIBRANDO...";
+                document.getElementById('status-txt').innerText = "RECALIBRANDO SISTEMA...";
                 setTimeout(() => location.reload(), 2000);
             } else {
                 sessionStorage.removeItem('reloaded');
-                document.getElementById('status-txt').innerText = "SINAL INDISPONÍVEL";
-                document.getElementById('error-msg').style.display = "block";
+                document.getElementById('status-txt').innerText = "NENHUM SERVIDOR ATIVO";
+                document.getElementById('status-txt').style.color = "var(--neon-red)";
+                document.getElementById('final-exit-btn').style.display = "block";
             }
             return;
         }
 
-        document.querySelectorAll('.srv-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('s' + currentTry).classList.add('active');
-        document.getElementById('status-txt').innerText = "BUSCANDO SERVIDOR 0" + (currentTry + 1);
+        const btn = document.getElementById('s' + currentTry);
+        btn.className = 'srv-btn testing';
+        document.getElementById('status-txt').innerText = "PROCURANDO SERVIDOR 0" + (currentTry + 1);
         
         const bar = document.getElementById('bar');
         bar.style.transition = "width 10s linear";
         bar.style.width = "100%";
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
 
         try {
             await fetch(playlistUrls[currentTry], { mode: 'no-cors', signal: controller.signal });
             clearTimeout(timeoutId);
             
-            document.getElementById('status-txt').innerText = "CONECTADO!";
+            // SUCESSO - VERDE NEON
+            btn.className = 'srv-btn online';
+            document.getElementById('status-txt').innerText = "CONECTADO COM SUCESSO!";
+            document.getElementById('status-txt').style.color = "var(--neon-green)";
             bar.style.transition = "0.3s";
+            bar.style.backgroundColor = "var(--neon-green)";
             
             const cleanUrl = playlistUrls[currentTry].replace(/https?:\/\//, '');
             const intent = `intent://${cleanUrl}#Intent;scheme=http;type=video/*;package=com.wuffy.player;S.title=URSOTV%20PRO;end`;
 
             setTimeout(() => { window.location.href = intent; }, 1000);
         } catch (e) {
+            // FALHA - VERMELHO NEON
+            btn.className = 'srv-btn offline';
             bar.style.transition = "0s";
             bar.style.width = "0%";
             currentTry++;
