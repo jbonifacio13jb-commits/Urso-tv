@@ -3,59 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UrsoTV Premium</title>
+    <title>URSOTV PRO</title>
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/93/93634.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         body { background-color: #0f172a; overflow: hidden; }
         .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar { height: calc(100vh - 80px); overflow-y: auto; scroll-behavior: smooth; }
+        .sidebar { height: calc(100vh - 80px); overflow-y: auto; }
         .sidebar::-webkit-scrollbar { width: 6px; }
         .sidebar::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 10px; }
-        .channel-item { border-left: 4px solid transparent; transition: all 0.2s; }
+        .channel-item { border-left: 4px solid transparent; transition: all 0.2s; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .channel-item:hover { background: rgba(245, 158, 11, 0.15); border-left-color: #f59e0b; }
         .active-channel { background: rgba(245, 158, 11, 0.25); border-left-color: #fbbf24; font-weight: bold; }
-        #urso-player { width: 100% !important; height: 100% !important; border-radius: 8px; }
+        .server-btn { transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .server-btn:hover, .server-active { background: #f59e0b; color: black; border-color: #f59e0b; }
+        .fav-star { color: #4b5563; transition: color 0.2s; }
+        .fav-star.active { color: #f59e0b; }
     </style>
 </head>
 <body class="text-white font-sans">
 
-    <header class="h-20 glass flex flex-col md:flex-row items-center justify-between px-6 z-10 relative gap-4 py-2 md:py-0">
-        <h1 class="text-2xl font-black text-yellow-500 tracking-tighter shrink-0">UrsoTV <span class="text-white font-light italic text-lg uppercase">Premium</span></h1>
-        
-        <div class="flex gap-2 w-full max-w-2xl">
-            <input type="text" id="m3uUrl" 
-                   class="bg-gray-900 border border-gray-700 rounded-l-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all text-yellow-100" 
-                   placeholder="Cole o link da lista .m3u aqui...">
-            <button onclick="loadPlaylist()" 
-                    class="bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold px-6 py-2 rounded-r-xl text-sm transition-all shadow-lg active:scale-95">
-                CARREGAR
-            </button>
+    <header class="h-20 glass flex items-center justify-between px-6 z-10 relative">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center font-bold text-black shadow-lg italic">U</div>
+            <h1 class="text-2xl font-black text-yellow-500 tracking-tighter uppercase">URSOTV <span class="text-white font-light italic text-lg">PRO</span></h1>
         </div>
+        
+        <div class="flex gap-2" id="serverSelector">
+            <button onclick="showFavorites()" class="server-btn px-4 py-2 rounded-lg text-xs font-bold uppercase bg-gray-700 text-yellow-500 border-yellow-500/30">
+                <i class="fas fa-star mr-1"></i> Favoritos
+            </button>
+            </div>
     </header>
 
     <main class="flex h-screen flex-col md:flex-row">
         <aside class="w-full md:w-80 bg-gray-900 border-r border-gray-800 sidebar order-2 md:order-1" id="sidebar">
             <div class="p-4 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-800">
-                <span>Lista de Canais</span>
-                <span id="count" class="bg-yellow-500 text-black px-2 py-0.5 rounded">0</span>
+                <span id="listTitle">Selecione um Servidor</span>
+                <span id="count" class="bg-yellow-500 text-black px-2 py-0.5 rounded text-[10px]">0</span>
             </div>
             <ul id="channelList" class="flex flex-col">
-                <li class="p-10 text-center text-gray-500 italic">Aguardando lista...</li>
+                <li class="p-10 text-center text-gray-500 italic">Pronto para começar.</li>
             </ul>
         </aside>
 
-        <section class="flex-1 bg-black flex items-center justify-center p-2 md:p-6 order-1 md:order-2 relative">
-            <div class="w-full aspect-video shadow-2xl rounded-xl overflow-hidden bg-gray-950">
-                <video id="urso-player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" poster="https://img.freepik.com/fotos-premium/fundo-abstrato-do-logotipo-da-ia-gerado-pelo-urso_1020495-20038.jpg">
-                    <p class="vjs-no-js">Habilite o JavaScript para assistir.</p>
+        <section class="flex-1 bg-black flex items-center justify-center p-2 md:p-6 order-1 md:order-2">
+            <div class="w-full aspect-video shadow-2xl rounded-xl overflow-hidden bg-gray-950 border border-gray-800">
+                <video id="urso-player" class="video-js vjs-default-skin vjs-big-play-centered w-full h-full" 
+                       controls preload="auto" 
+                       poster="https://i.imgur.com/8Nn3X2M.jpg">
                 </video>
             </div>
         </section>
@@ -63,11 +62,101 @@
 
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script>
+        const config = {
+            "Servers": [
+                {"name": "Servidor 1", "url": "http://inter.py84.eu/get.php?username=ligia123456&password=25228598081&type=m3u"},
+                {"name": "Servidor 2", "url": "http://clarotv.org:80/get.php?username=Gilmar2424&password=f3Zq4T&type=m3u_plus"},
+                {"name": "Servidor 3", "url": "http://mais.tvhome.click:80/get.php?username=63563847&password=534384835&type=m3u_plus"}
+            ]
+        };
+
+        let favorites = JSON.parse(localStorage.getItem('ursotv_favs')) || [];
         var player = videojs('urso-player');
 
-        async function loadPlaylist() {
-            const url = document.getElementById('m3uUrl').value.trim();
-            if (!url) return alert("⚠️ Por favor, cole uma URL válida!");
+        // Gerar botões de servidor
+        const serverSelector = document.getElementById('serverSelector');
+        config.Servers.forEach(server => {
+            const btn = document.createElement('button');
+            btn.className = 'server-btn px-4 py-2 rounded-lg text-xs font-bold uppercase bg-gray-800 text-gray-300';
+            btn.innerText = server.name;
+            btn.onclick = () => loadPlaylist(server.url, server.name, btn);
+            serverSelector.appendChild(btn);
+        });
 
+        async function loadPlaylist(url, name, btn) {
+            document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('server-active'));
+            if(btn) btn.classList.add('server-active');
+            
+            document.getElementById('listTitle').innerText = name;
             const listElement = document.getElementById('channelList');
-            listElement.innerHTML = '<li class="p-10 text-center text
+            listElement.innerHTML = '<li class="p-10 text-center text-yellow-500 animate-pulse">Carregando...</li>';
+
+            try {
+                const response = await fetch(url);
+                const data = await response.text();
+                renderChannels(parseM3U(data));
+            } catch (error) {
+                listElement.innerHTML = '<li class="p-6 text-center text-red-400 text-xs">Erro de conexão. Ative o CORS no navegador.</li>';
+            }
+        }
+
+        function parseM3U(content) {
+            const lines = content.split('\n');
+            let channels = [];
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes('#EXTINF')) {
+                    const name = lines[i].split(',')[1] || "Canal";
+                    const url = lines[i+1]?.trim();
+                    if (url && url.startsWith('http')) channels.push({ name: name.trim(), url });
+                }
+            }
+            return channels;
+        }
+
+        function renderChannels(channels) {
+            const listElement = document.getElementById('channelList');
+            listElement.innerHTML = '';
+            document.getElementById('count').innerText = channels.length;
+
+            channels.forEach(channel => {
+                const isFav = favorites.some(f => f.url === channel.url);
+                const li = document.createElement('li');
+                li.className = 'channel-item p-4 border-b border-gray-800 text-sm';
+                li.innerHTML = `
+                    <span class="truncate pr-2">${channel.name}</span>
+                    <i class="fas fa-star fav-star ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${btoa(unescape(encodeURIComponent(channel.name)))}', '${channel.url}')"></i>
+                `;
+                li.onclick = () => playChannel(channel.url, li);
+                listElement.appendChild(li);
+            });
+        }
+
+        function toggleFav(e, nameBase64, url) {
+            e.stopPropagation();
+            const name = decodeURIComponent(escape(atob(nameBase64)));
+            const index = favorites.findIndex(f => f.url === url);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                e.target.classList.remove('active');
+            } else {
+                favorites.push({ name, url });
+                e.target.classList.add('active');
+            }
+            localStorage.setItem('ursotv_favs', JSON.stringify(favorites));
+        }
+
+        function showFavorites() {
+            document.getElementById('listTitle').innerText = "Meus Favoritos";
+            renderChannels(favorites);
+        }
+
+        function playChannel(url, el) {
+            document.querySelectorAll('.channel-item').forEach(li => li.classList.remove('active-channel'));
+            el.classList.add('active-channel');
+            player.src({ src: url, type: 'application/x-mpegURL' });
+            player.play();
+        }
+    </script>
+</body>
+</html>
