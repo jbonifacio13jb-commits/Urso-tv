@@ -3,19 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSOTV PRO - Otimizado</title>
+    <title>URSOTV PRO - Premium</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { background: #050505; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
-        #player-container { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
-        video { width: 100%; height: 100%; }
-        .status-overlay { position: absolute; top: 10px; left: 10px; font-size: 12px; color: #ffcc00; z-index: 10; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px; }
+        :root { --primary: #ffcc00; --bg: #0a0a0a; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* Cabeçalho e Botões */
+        .header { padding: 15px; background: #111; border-bottom: 2px solid var(--primary); text-align: center; }
+        .btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        button { 
+            background: #222; color: var(--primary); border: 1px solid var(--primary); 
+            padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; 
+            transition: 0.3s; text-transform: uppercase; font-size: 12px;
+        }
+        button:hover, button.active { background: var(--primary); color: #000; }
+
+        /* Player */
+        #video-wrapper { flex-grow: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; max-height: 80vh; }
+        
+        .status-msg { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; font-size: 12px; color: var(--primary); z-index: 100; pointer-events: none; }
     </style>
 </head>
 <body>
 
-<div id="status" class="status-overlay">Iniciando sistema...</div>
-<div id="player-container">
+<div class="header">
+    <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px;">URSOTV PRO - SELECIONE O SERVIDOR</div>
+    <div class="btn-group">
+        <button onclick="changeSource(0, this)" id="default-btn">Servidor 01 (Chefe)</button>
+        <button onclick="changeSource(1, this)">Servidor 02 (Duo)</button>
+        <button onclick="changeSource(2, this)">Servidor 03 (Rede)</button>
+    </div>
+</div>
+
+<div id="video-wrapper">
+    <div id="status" class="status-msg">Aguardando seleção...</div>
     <video id="player" playsinline controls autoplay muted></video>
 </div>
 
@@ -23,61 +46,84 @@
 <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
 <script>
-    // LISTA DE PROXYS (Substituem a necessidade de VPN manual para erro CORS)
+    // Suas URLs fornecidas
+    const urls = [
+        "http://dj.chefemcasa.store:8080/get.php?username=adl021222&password=iptvemcasa@1&type=m3u_plus",
+        "http://provedorduo.xyz/get.php?username=09927119&password=49290268&type=m3u_plus",
+        "http://rede.tvno.site/get.php?username=barreto1766&password=ma257799007&type=m3u_plus"
+    ];
+
+    // Proxies para simular VPN e evitar erro CORS
     const proxies = [
-        "", // Tentativa direta
+        "", // Direto
         "https://api.allorigins.win/raw?url=", 
         "https://corsproxy.io/?",
         "https://thingproxy.freeboard.io/fetch/"
     ];
 
-    const streamUrl = "URL_DO_SEU_CANAL_AQUI.m3u8"; // Substitua pelo link real
-    const statusEl = document.getElementById('status');
+    let currentUrlIndex = 0;
+    let currentProxyIndex = 0;
     const video = document.getElementById('player');
-    let proxyIndex = 0;
+    const statusEl = document.getElementById('status');
+    let hls = new Hls();
 
-    function initPlayer(source) {
+    function updateStatus(msg) { statusEl.innerText = msg; }
+
+    function changeSource(index, btn) {
+        // Estética dos botões
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        currentUrlIndex = index;
+        currentProxyIndex = 0; // Reseta tentativa de proxy para o novo link
+        loadStream(urls[currentUrlIndex]);
+    }
+
+    function loadStream(baseUrl) {
+        const proxyPrefix = proxies[currentProxyIndex];
+        const finalUrl = proxyPrefix + encodeURIComponent(baseUrl);
+        
+        updateStatus(currentProxyIndex === 0 ? "Conectando diretamente..." : `Tentando via Túnel VPN ${currentProxyIndex}...`);
+
         if (Hls.isSupported()) {
-            const hls = new Hls({
-                xhrSetup: function(xhr) { xhr.withCredentials = false; }
+            hls.destroy(); // Limpa conexão anterior
+            hls = new Hls({
+                maxBufferLength: 30,
+                enableWorker: true
             });
-            hls.loadSource(source);
+            hls.loadSource(finalUrl);
             hls.attachMedia(video);
+            
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                statusEl.innerText = "Conectado! Reproduzindo...";
-                video.play().catch(() => {
-                    statusEl.innerText = "Clique na tela para iniciar o áudio";
-                });
+                updateStatus("Reproduzindo agora...");
+                video.play();
             });
 
-            // Erro de rede: Tenta o próximo "Proxy/VPN"
-            hls.on(Hls.Events.ERROR, function (event, data) {
+            hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
-                    console.warn("Erro de conexão, tentando túnel alternativo...");
                     tryNextProxy();
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = source;
+            video.src = finalUrl;
         }
     }
 
     function tryNextProxy() {
-        if (proxyIndex < proxies.length) {
-            const newUrl = proxies[proxyIndex] + encodeURIComponent(streamUrl);
-            statusEl.innerText = `Tentando Servidor/VPN ${proxyIndex + 1}...`;
-            proxyIndex++;
-            initPlayer(newUrl);
+        currentProxyIndex++;
+        if (currentProxyIndex < proxies.length) {
+            loadStream(urls[currentUrlIndex]);
         } else {
-            statusEl.innerText = "Erro fatal: Todos os servidores falharam.";
+            updateStatus("Erro: Servidor offline ou bloqueado.");
         }
     }
 
-    // Inicialização automática
+    // Iniciar automaticamente no primeiro servidor
     window.onload = () => {
-        const player = new Plyr(video, { autoplay: true, muted: true });
-        tryNextProxy();
+        const plyr = new Plyr(video, { autoplay: true, muted: true });
+        document.getElementById('default-btn').click();
     };
 </script>
+
 </body>
 </html>
