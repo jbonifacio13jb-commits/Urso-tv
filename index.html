@@ -3,32 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URSOTV PRO - Auto Scanner</title>
+    <title>URSOTV PRO - Fullscreen Turbo</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
         :root { --gold: #ffcc00; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
         
-        .header { padding: 15px; background: #111; text-align: center; border-bottom: 2px solid var(--gold); }
-        .logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
-        .pata { font-size: 28px; color: var(--gold); }
+        /* Cabeçalho */
+        .header { padding: 12px; background: #111; text-align: center; border-bottom: 2px solid var(--gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .pata { font-size: 26px; filter: drop-shadow(0 0 5px var(--gold)); }
         
-        .btn-group { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .btn-group { display: flex; justify-content: center; gap: 6px; }
         button { 
             background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); 
-            padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; 
-            font-size: 10px; transition: 0.3s;
+            padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; 
+            font-size: 10px; transition: 0.2s; text-transform: uppercase;
         }
-        button.active { background: var(--gold); color: #000; }
+        button.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
 
-        #player-area { flex-grow: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
-        video { width: 100%; height: 100%; }
+        /* Area do Player e Scanner */
+        #main-stage { flex-grow: 1; position: relative; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; object-fit: contain; }
         
-        .scanner-info { 
-            position: absolute; top: 20px; background: rgba(0,0,0,0.8); 
-            padding: 8px 15px; border-radius: 5px; border-left: 4px solid var(--gold);
-            font-size: 12px; z-index: 10; pointer-events: none;
+        .scanner-box { 
+            position: absolute; width: 80%; max-width: 300px; background: rgba(0,0,0,0.85); 
+            padding: 20px; border-radius: 10px; border: 1px solid #333; text-align: center; z-index: 50;
         }
+        .progress-container { width: 100%; height: 6px; background: #222; border-radius: 3px; margin: 15px 0; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s linear; }
+        .scan-msg { font-size: 12px; font-weight: bold; color: var(--gold); margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -36,17 +40,22 @@
 <div class="header">
     <div class="logo">
         <span class="pata">🐾</span>
-        <span style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">URSOTV <span style="color:var(--gold)">PRO</span></span>
+        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">URSOTV <span style="color:var(--gold)">PRO</span></span>
     </div>
     <div class="btn-group">
-        <button onclick="changeServer(0, this)" id="btn0">SERVIDOR 1</button>
-        <button onclick="changeServer(1, this)">SERVIDOR 2</button>
-        <button onclick="changeServer(2, this)">SERVIDOR 3</button>
+        <button onclick="initScan(0, this)" id="btn0">SERV 01</button>
+        <button onclick="initScan(1, this)">SERV 02</button>
+        <button onclick="initScan(2, this)">SERV 03</button>
     </div>
 </div>
 
-<div id="player-area">
-    <div id="status" class="scanner-info">Iniciando busca de sinal...</div>
+<div id="main-stage">
+    <div id="scanner-ui" class="scanner-box">
+        <div class="scan-msg" id="status-text">Iniciando Varredura...</div>
+        <div class="progress-container"><div id="p-bar" class="progress-bar"></div></div>
+        <div style="font-size: 10px; color: #888;" id="detail-text">Testando Canal 1...</div>
+    </div>
+    
     <video id="player" playsinline controls autoplay muted></video>
 </div>
 
@@ -54,7 +63,6 @@
 <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
 <script>
-    // Configurações de Base
     const serverBases = [
         "http://dj.chefemcasa.store:8080/live/adl021222/iptvemcasa@1/",
         "http://provedorduo.xyz/live/09927119/49290268/",
@@ -63,74 +71,80 @@
 
     const proxies = ["", "https://corsproxy.io/?", "https://api.allorigins.win/raw?url="];
     
-    let currentServerIdx = 0;
-    let currentChannelID = 1; // Começa no canal 1 e vai subindo
-    let proxyIdx = 0;
-    let failCount = 0;
-
+    let currentSrv = 0, currentChan = 1, currentPrx = 0;
     const video = document.getElementById('player');
-    const statusEl = document.getElementById('status');
+    const ui = document.getElementById('scanner-ui');
+    const pBar = document.getElementById('p-bar');
+    const statusText = document.getElementById('status-text');
+    const detailText = document.getElementById('detail-text');
+    
     let hls = new Hls();
+    const plyr = new Plyr(video, { autoplay: true, muted: true });
 
-    function changeServer(idx, btn) {
+    function initScan(idx, btn) {
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentServerIdx = idx;
-        currentChannelID = 1; // Reinicia busca no novo servidor
-        proxyIdx = 0;
-        startScan();
-    }
-
-    function startScan() {
-        const url = `${serverBases[currentServerIdx]}${currentChannelID}.m3u8`;
-        const proxiedUrl = proxies[proxyIdx] + encodeURIComponent(url);
         
-        statusEl.innerHTML = `📡 <b>Buscando Canal:</b> ${currentChannelID} <br> <small>Tentando túnel ${proxyIdx + 1}</small>`;
-
-        if (Hls.isSupported()) {
-            hls.destroy();
-            hls = new Hls({ 
-                manifestLoadingTimeOut: 3000, // Desiste rápido se o canal estiver off
-                xhrSetup: xhr => xhr.withCredentials = false 
-            });
-            
-            hls.loadSource(proxiedUrl);
-            hls.attachMedia(video);
-
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                statusEl.innerHTML = `✅ <b>ONLINE:</b> Canal ${currentChannelID}`;
-                video.play();
-            });
-
-            hls.on(Hls.Events.ERROR, (e, data) => {
-                if (data.fatal) {
-                    handleFailure();
-                }
-            });
-        }
+        currentSrv = idx; currentChan = 1; currentPrx = 0;
+        ui.style.display = 'block';
+        runScan();
     }
 
-    function handleFailure() {
-        // Tenta todos os proxies para o mesmo canal antes de pular para o próximo ID
-        if (proxyIdx < proxies.length - 1) {
-            proxyIdx++;
-            startScan();
-        } else {
-            // Se falhou em todos os proxies, pula para o próximo ID de canal
-            proxyIdx = 0;
-            currentChannelID++;
-            
-            // Limite de segurança para não rodar infinito se o servidor estiver todo off
-            if (currentChannelID > 50) { 
-                statusEl.innerHTML = "❌ Servidor instável. Tente outro.";
-                return;
+    function runScan() {
+        const targetUrl = `${serverBases[currentSrv]}${currentChan}.m3u8`;
+        const finalUrl = proxies[currentPrx] + encodeURIComponent(targetUrl);
+        
+        // Atualiza Progresso (baseado em limite de 500 canais)
+        const prog = (currentChan / 500) * 100;
+        pBar.style.width = `${prog}%`;
+        detailText.innerText = `Testando Canal ${currentChan} (Rota ${currentPrx + 1})`;
+
+        hls.destroy();
+        hls = new Hls({ 
+            manifestLoadingTimeOut: 2000, 
+            fragLoadingTimeOut: 2000,
+            enableWorker: true 
+        });
+
+        hls.loadSource(finalUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            ui.style.display = 'none'; // Esconde scanner
+            video.play();
+            statusText.innerText = "SINAL ENCONTRADO!";
+            triggerFullscreen();
+        });
+
+        hls.on(Hls.Events.ERROR, (e, data) => {
+            if (data.fatal) {
+                // Tenta todos os proxies antes de pular canal
+                if (currentPrx < proxies.length - 1) {
+                    currentPrx++;
+                    runScan();
+                } else {
+                    currentPrx = 0;
+                    currentChan += 10; // SALTO TURBO DE 10 EM 10
+                    
+                    if (currentChan > 1000) {
+                        statusText.innerText = "Fim da lista atingido.";
+                        return;
+                    }
+                    runScan();
+                }
             }
-            startScan();
-        }
+        });
+    }
+
+    function triggerFullscreen() {
+        const elem = document.getElementById('main-stage');
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
     }
 
     window.onload = () => {
-        new Plyr(video, { autoplay: true, muted: true });
+        // Inicia automaticamente no Servidor 1 ao carregar
         document.getElementById('btn0').click();
     };
 </script>
