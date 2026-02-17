@@ -14,13 +14,81 @@
         button { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
         button.active { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
 
-        .player-selector { display: none; margin: 20px auto; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #333; width: 85%; max-width: 350px; }
+        .player-selector { display: block; margin: 20px auto; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #333; width: 85%; max-width: 350px; }
         .player-btn { display: block; width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 13px; color: white; border: none; cursor: pointer; }
         
-        /* Players Instalados */
+        /* Cores dos Players Instalados */
         .ott { background: #00a8ff; }
         .player-pro { background: #44bd32; }
         .unitv { background: #9c88ff; }
 
-        /* Links de Download */
-        .download-box { margin-top: 20px; padding: 10px
+        .footer-tools { margin-top: 20px; font-size: 10px; }
+        .reset-btn { color: #555; background: none; border: none; text-decoration: underline; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="pata">🐾</div>
+    <div style="font-size: 22px; font-weight: 900;">URSOTV <span style="color:var(--gold)">PRO</span></div>
+    <div class="btn-group">
+        <button onclick="selectSrv(0, this)" id="b0">SERV 01</button>
+        <button onclick="selectSrv(1, this)">SERV 02</button>
+        <button onclick="selectSrv(2, this)">SERV 03</button>
+    </div>
+</div>
+
+<div id="player-ui" class="player-selector">
+    <div id="srv-label" style="font-size: 12px; margin-bottom: 15px; color: var(--gold); font-weight: bold;">SERVIDOR 01 SELECIONADO</div>
+    
+    <button onclick="openPlayer('ott')" class="player-btn ott">ABRIR NO OTT NAVIGATOR</button>
+    <button onclick="openPlayer('pro')" class="player-btn player-pro">ABRIR NO IPTV PLAYER PRO</button>
+    <button onclick="openPlayer('unitv')" class="player-btn unitv">ABRIR NO UNITV FREE</button>
+
+    <div style="margin-top: 15px; border-top: 1px solid #222; padding-top: 10px;">
+        <div style="font-size: 10px; color: #666; margin-bottom: 5px;">Se não abrir, baixe estes:</div>
+        <a href="https://play.google.com/store/apps/details?id=com.wuffy.player" style="color:var(--gold); font-size: 10px; margin-right: 10px;">Wuffy Player</a>
+        <a href="https://play.google.com/store/apps/details?id=com.xmtvplayer.xmtv" style="color:var(--gold); font-size: 10px;">XMTV Player</a>
+    </div>
+</div>
+
+<div class="footer-tools">
+    <button class="reset-btn" onclick="location.reload()">TELA PRETA? RECARREGAR APP</button>
+</div>
+
+<script>
+    const serverBases = [
+        "http://dj.chefemcasa.store:8080/live/adl021222/iptvemcasa@1/1.m3u8",
+        "http://provedorduo.xyz/live/09927119/49290268/1.m3u8",
+        "http://rede.tvno.site/live/barreto1766/ma257799007/1.m3u8"
+    ];
+
+    let currentUrl = serverBases[0];
+
+    function selectSrv(idx, btn) {
+        document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentUrl = serverBases[idx];
+        document.getElementById('srv-label').innerText = "SERVIDOR 0" + (idx + 1) + " SELECIONADO";
+    }
+
+    function openPlayer(type) {
+        const cleanUrl = currentUrl.replace(/https?:\/\//, '');
+        let pkg = "";
+        
+        if(type === 'ott') pkg = "com.studio5.ottnavigator";
+        else if(type === 'pro') pkg = "com.devcoder.iptvplayerpro";
+        else if(type === 'unitv') pkg = "com.unitv.free";
+
+        // Intent direto - sem frescuras para não travar
+        const intent = `intent://${cleanUrl}#Intent;scheme=http;type=video/*;package=${pkg};S.title=URSOTV%20PRO;end`;
+        window.location.href = intent;
+    }
+
+    // Seleciona o primeiro por padrão sem animação de carregamento (evita tela preta)
+    window.onload = () => {
+        document.getElementById('b0').classList.add('active');
+    };
+</script>
+</body>
+</html>
